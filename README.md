@@ -130,6 +130,16 @@ Only authorized administrators can change user roles; the original owner record 
 
 **A payment flag is a manual staff record, NOT proof of online payment.** A bulk request's quote is NOT a finalized invoice.
 
+## Sign-in-first storefront and navigation (October 2026)
+
+- First-time and signed-out visitors see a **welcome screen** where Google sign-in is the primary action. There is also a **Browse the menu first** option; guests do not need an account simply to see meals.
+- The welcome screen waits for Firebase to check an existing login. **Returning signed-in customers skip the welcome step** and go straight to the storefront.
+- Guests can view the menu, but **must sign in before placing an actual order, posting feedback, or requesting a bulk booking**. Clicking a sign-in link returns to the same welcome screen. Guest browsing is remembered only in the current browser tab session.
+- Public header navigation is now limited to **Menu**, **How it works**, and **Requests & feedback**. **My account / Sign in** and the cart are separate controls. The staff/admin link is in the footer rather than competing with customer navigation.
+- The signed-in storefront has a shorter introduction and gets customers closer to the active food menu. Sample menu products remain non-orderable and clearly identified.
+- On small screens, the primary navigation is a compact expandable menu. Returning users can still manage orders under My account; sign-out clears private customer information and returns them to the welcome step.
+- No additional identity or password system has been introduced; Google Authentication and the existing Firestore customer records are reused. Existing role permissions remain unchanged.
+
 ## Mobile navigation and administrator sign-in
 
 - **Mobile customer experience:** the website now has a hamburger menu in the top-right corner. It shows Menu, How ordering works, My account & orders, Requests & feedback, Our Story, and Staff / Admin portal.
