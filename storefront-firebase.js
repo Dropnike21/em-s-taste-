@@ -2,11 +2,11 @@ import { auth, db } from "./firebase-config.js";
 import {
   GoogleAuthProvider, onAuthStateChanged, signInWithPopup,
   signOut, getIdTokenResult
-} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
 import {
   collection, getDocs, getDoc, doc, setDoc, query, where, limit,
   serverTimestamp, Timestamp
-} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
 
 const state = {
   ready: false, error: null, settings: null, items: [], usingLiveMenu: false,
