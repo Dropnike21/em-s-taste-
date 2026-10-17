@@ -81,3 +81,18 @@
  .ems-account-name{max-width:70px}
 }
 @media(prefers-reduced-motion:reduce){.ems-loader-card img,.ems-loader-progress i{animation:none}}
+
+/* Consistent active navigation and narrow-screen account behavior. */
+.ems-primary-nav a[aria-current="page"]{background:#f7e8d9;color:#9c492f}
+@media(max-width:390px){
+  .ems-header .brand img{width:31px;height:31px}
+  .ems-header .brand-text strong{font-size:15px}
+  .ems-header .brand-text small{display:none}
+  .ems-header .ems-header-inner{gap:5px}
+  .ems-header-actions{gap:5px}
+  .ems-cart-button,.ems-workspace-home{width:35px;height:37px}
+  .ems-account-avatar{display:none}
+  .ems-account-trigger{max-width:106px;min-height:37px;padding:5px 7px}
+  .ems-account-name{max-width:76px}
+  .ems-header-menu-toggle{width:30px;height:36px}
+}
