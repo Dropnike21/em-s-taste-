@@ -4,13 +4,14 @@ import {doc,getDoc} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-fir
 import {initMenu,refreshMenu,refreshSuggestions} from "./menu.js";
 import {initOrders,refreshOrders} from "./orders.js";
 import {initBulk,refreshBulk} from "./bulk.js";
+import {initPrep,refreshPrep} from "./prep.js";
 import {initSettings,refreshSettings} from "./settings.js";
 import {initInsights,refreshInsights} from "./insights.js";
 import {initPeople,refreshPeople} from "./people.js";
 import {initReports,refreshReports} from "./reports.js";
 
 let role=null;
-const staffPanels=["menu-panel","orders-panel","bulk-panel"];
+const staffPanels=["menu-panel","orders-panel","bulk-panel","prep-panel"];
 const adminPanels=["settings-panel","insights-panel","team-panel","reports-panel"];
 function showLogin(){
  role=null;
@@ -68,6 +69,7 @@ async function loadAll(){
  if(role==="admin")essentials.push(refreshSettings(),refreshPeople(),refreshReports());
  else essentials.push(refreshSuggestions());
  const outcomes=await Promise.allSettled(essentials);
+ if(outcomes.every(x=>x.status==="fulfilled")) refreshPrep();
  if(role==="admin"&&outcomes.every(x=>x.status==="fulfilled")){
   try{await refreshInsights();}catch(error){console.error(error);msg("Operational data loaded, but ratings could not be refreshed.");}
  }
@@ -102,5 +104,5 @@ $("#google-login").addEventListener("click",async()=>{
 $("#sign-out").addEventListener("click",()=>signOut(auth));
 $("#refresh-dashboard").addEventListener("click",loadAll);
 document.querySelectorAll("[data-panel]").forEach(tab=>tab.addEventListener("click",()=>activateTab(tab.dataset.panel)));
-initMenu();initOrders();initBulk();initSettings();initPeople();initReports();
+initMenu();initOrders();initBulk();initPrep();initSettings();initPeople();initReports();
 $("#year").textContent=new Date().getFullYear();
