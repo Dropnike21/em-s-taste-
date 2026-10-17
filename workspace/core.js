@@ -6,7 +6,7 @@ import {initOrders,refreshOrders} from "./orders.js";
 import {initBulk,refreshBulk} from "./bulk.js";
 import {initPrep,refreshPrep} from "./prep.js";
 import {initSettings,refreshSettings} from "./settings.js";
-import {initInsights,refreshInsights} from "./insights.js";
+import {refreshInsights} from "./insights.js";
 import {initPeople,refreshPeople} from "./people.js";
 import {initReports,refreshReports} from "./reports.js";
 
