@@ -7,24 +7,33 @@
 ## Architecture
 
 - Static GitHub Pages site: HTML, CSS, JavaScript
-- **Firebase Authentication:** email/password sign-in for *administrators only*. Customers never register or log in.
+- **Firebase Authentication:** Facebook Login for *administrators only*. Customers never register or log in.
 - **Cloud Firestore:** stores current menu, workday/cutoff configuration, customer order requests and privately authorized admin IDs
 - No independent delivery service yet; orders are organized by workplace/pickup group
 
-## Getting started in Firebase Console
+## Set up Facebook Login (Firebase + Meta)
 
-Use project **ems-taste** at https://console.firebase.google.com/.
+Use the Firebase project **ems-taste** at https://console.firebase.google.com/ and create a Meta developer app at https://developers.facebook.com/.
 
-1. **Build → Firestore Database:** Create a Cloud Firestore database (if not created yet). Choose a region carefully because its location cannot be changed later. Keep production rules restrictive; do **not** publish `allow read, write: if true`.
-2. **Build → Authentication → Sign-in method:** Enable **Email/Password**. Do not enable public self-signup. Go to **Users → Add user** and create the first admin's email and password.
-3. **Authentication → Settings → Authorized domains:** Add your actual GitHub Pages domain, likely `dropnike21.github.io`, if it is not already in the list. For a custom domain, add that too.
-4. Copy the Firebase Authentication user’s exact **UID** from **Authentication → Users**.
-5. In **Firestore → Data**, manually create collection `admins`, document ID exactly matching that UID, and add field `active` of **boolean** type `true`. This is the allowlist that gives that person admin access. **Never let the public website create/update admin permission documents.**
-6. Publish the repository’s **`firestore.rules`** in **Firestore Database → Rules**. Optionally use the CLI with `firebase deploy --only firestore:rules --project ems-taste` from the repository after authenticating Firebase CLI. These rules are **not** deployed automatically merely by pushing them to GitHub.
-7. Publish your repository as GitHub Pages: **Settings → Pages → Deploy from branch → main → /(root)**.
-8. Open **`admin.html`** on your GitHub Pages domain and sign in with the admin email/password. The page verifies your UID’s `admins/{uid}` Firestore record.
-9. In the admin dashboard, create your **real** menu dishes and prices, set the **Monday–Friday service date** in **Ordering settings**, and enable **Allow online order requests** only after you have reviewed the safeguards below.
-10. Refresh the public storefront to load the menu. Only Sunday–Thursday before **11:00 PM Philippine time** can customers submit requests for the following workday.
+1. In **Firebase Authentication → Sign-in method**, enable **Facebook**. Do **not** need Email/Password for this Facebook-only dashboard.
+2. In **Meta for Developers**, create or select a Meta app with **Facebook Login** enabled (web application). Meta's workflow may ask for app details, privacy policy URL, and other compliance information. Add your actual website domain in its applicable app settings.
+3. Copy your Meta **App ID** and **App Secret** to the **Facebook provider settings in Firebase Authentication**. **Never commit the App Secret to GitHub.** The public Firebase web config in `firebase-config.js` is a different thing.
+4. Set the **Valid OAuth Redirect URI** in the Meta Facebook Login settings to **`https://ems-taste.firebaseapp.com/__/auth/handler`** (exact path, including HTTPS).
+5. In **Firebase Authentication → Settings → Authorized domains**, allow the domain hosting your admin page, generally **`dropnike21.github.io`** for GitHub Pages. Add any custom domain you use.
+6. For initial testing, keep the Meta app in Development mode and add your intended admins as eligible app roles/testers. Public Facebook Login can require additional Meta configuration/review. Switch to Live only after you meet Meta's requirements.
+7. Set up Cloud Firestore if not already created. **Publish the repository's `firestore.rules`** in Firestore's Rules tab (or deploy with `firebase deploy --only firestore:rules --project ems-taste`). Pushing this file to GitHub **does not** deploy the security rules.
+8. Open your hosted **`admin.html`** page and click **Continue with Facebook**. The *first* successful Facebook sign-in creates an Authentication user even if it is not yet an authorized admin. The page will display your Firebase UID when it denies dashboard access. You can also retrieve that UID from **Firebase Authentication → Users**.
+9. In **Firestore → Data**, create an `admins` collection. Create a document with **the exact Firebase UID as its document ID** and field `active` of type **Boolean**, value `true`. Perform this only as the trusted project owner in Firebase Console. Never create admin accounts or allowlist entries from the public site.
+10. Sign in with Facebook again. The dashboard will open once the UID is approved. Add real menu items, select the corresponding workday in Ordering settings, and enable orders only after completing safeguards below.
+11. On GitHub, deploy **main → /(root)** using **Settings → Pages → Deploy from branch**, if not already enabled.
+
+### Accounts and password recovery
+
+- **No Em's Taste username, email address, or local password is necessary** for the admin login. Administrators use their Facebook credentials on Facebook's own login screen. No Facebook passwords are stored in Firestore.
+- If an administrator forgets their password, they should recover it **through Facebook**. The previous Firebase Email/Password reset UI has been removed.
+- If you previously authorized an email/password Firebase user, **Facebook login may create a different UID**, even if the email is the same. Approve the correct Facebook UID in `admins/{uid}` (or securely link the Facebook provider to the existing user, if you intentionally need the same UID). Do not rely on email/display names as your administrator authorization.
+- The website uses **`signInWithPopup()`** for GitHub Pages. A blocked popup or incompatible in-app browser may require enabling popups or opening in a normal browser. Firebase's cross-origin redirect flow has limitations on third-party hosted sites.
+- Sign-in is not proof of authorization. The app and Firestore security rules both require a Facebook-authenticated UID with `admins/{uid}.active == true`.
 
 ## What the website can do
 
@@ -38,9 +47,9 @@ Use project **ems-taste** at https://console.firebase.google.com/.
 - Staff **must confirm** every request; receiving a request is not a guarantee of availability or payment
 
 ### Admin console
-- Login via **Firebase Authentication Email/Password**; no public sign-up page
+- Login via **Facebook + Firebase Authentication**; no public username/password form
 - Verify authorization with Firestore document `admins/{uid}` containing `active: true`
-- Reset password by email on the login screen (Firebase Authentication)
+- Facebook handles password recovery and sign-in security
 - Create and edit dishes, prices, photos, and availability
 - Select menu workday and close/open requests
 - View up to 100 most recent order requests and update their status
@@ -82,7 +91,7 @@ Friday, Saturday, and days after the 11 PM cutoff are closed. **The admin must s
 - **Do not launch publicly without publishing and testing the included restrictive `firestore.rules`**. Its rules restrict menu/settings changes and order reads to authorized staff, validate submitted line items against Firestore prices, and enforce the Manila order window server-side.
 - Public unauthenticated order creation still has **spam and cost-abuse risks**. Before real customers order, add Firebase **App Check** and stronger server-side throttling/abuse prevention (prefer a Cloud Function or protected backend), verify Firestore quotas/billing alerts, and test rules using the Firestore emulator/rules playground.
 - Currently no inventory reservation, payment verification, receipt, automatic customer notification, or cancellation workflow. Customer order requests need staff confirmation; duplicate requests and last-minute stock changes remain possible.
-- Admin credentials belong in **Firebase Authentication**, **not Firestore documents**. Never save passwords, service-account JSON keys, or private keys in GitHub. Web-app Firebase configuration fields are public identifiers, not authorization.
+- Admin identities are managed by **Facebook + Firebase Authentication**; the allowlist is stored in Firestore, but passwords never are. Never save passwords, service-account JSON keys, or private keys in GitHub. Web-app Firebase configuration fields are public identifiers, not authorization.
 - Customer names, workplace details, and notes are personal data. Publish an appropriate privacy notice, limit what is collected, and define secure retention/deletion procedures before public launch.
 - Changing a price after a customer loads the page can cause their submission to be rejected; the customer should refresh and try again.
 - Image URLs entered by admins are rendered as images. Use trusted hosted photos and confirm permission to use them.
