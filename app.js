@@ -668,6 +668,12 @@
     updateSchedule();
   }
   renderCustomer();
-  // A returning signed-in visitor skips the intro; guests choose when to browse.
-  window.setInterval(updateSchedule, 30000);
+  // Reload the menu when the Philippine order cutoff changes the service day.
+  // This prevents showing yesterday's weekly selection for a new workday.
+  window.setInterval(() => {
+    const oldKey=schedule.serviceDate.toISOString().slice(0,10);
+    updateSchedule();
+    const nextKey=schedule.serviceDate.toISOString().slice(0,10);
+    if (nextKey!==oldKey) window.EMS_REFRESH_PUBLIC_MENU?.();
+  }, 30000);
 })();
