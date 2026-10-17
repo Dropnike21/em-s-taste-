@@ -130,7 +130,7 @@ window.EMS_SUBMIT = async ({ name, workplace, note, items, total, serviceDate })
     throw new Error("Ordering is not open for this workday.");
   }
   if (items.length < 1 || items.length > 6) throw new Error("Select up to six different menu items.");
-  if (items.reduce((count, item) => count + item.quantity, 0) > 10) throw new Error("There is a limit of ten servings per order.");
+  if (items.reduce((count, item) => count + item.quantity, 0) > 50) throw new Error("Normal requests are limited to 50 servings; choose bulk booking for 51+.");
   const orderId = customer.uid + "_" + dayKey;
   const reference = doc(db, "orders", orderId);
   if (state.orders.some(order => order.id === orderId)) {
