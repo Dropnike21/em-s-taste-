@@ -11,31 +11,48 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="ui/shell.css">
+  <script src="ui/shell.js" defer></script>
   <script src="menu.js" defer></script>
   <script src="app.js" defer></script>
   <script type="module" src="storefront-firebase.js"></script>
   <script type="module" src="customer/requests.js"></script>
 </head>
 <body>
-  <header class="site-header">
-    <div class="shell nav-row">
+  <header class="site-header ems-header">
+    <div class="shell nav-row ems-header-inner">
       <a class="brand" href="#top" aria-label="Em's Taste homepage">
-        <img src="logo.svg" alt="" width="49" height="49">
+        <img src="logo.svg" alt="" width="46" height="46">
         <span class="brand-text"><strong>Em’s Taste</strong><small>LUTONG BAHAY</small></span>
       </a>
-      <nav class="main-nav" id="site-navigation" aria-label="Main navigation">
+      <nav class="main-nav ems-primary-nav" id="site-navigation" aria-label="Customer navigation">
         <a href="#menu" data-guest-nav>Menu</a>
         <a href="#how-it-works" data-guest-nav>How it works</a>
         <a href="#customer-services" data-guest-nav>Requests & feedback</a>
       </nav>
-      <button id="account-shortcut" class="account-shortcut" type="button" aria-label="Sign in with Google">Sign in</button>
-      <button id="open-cart" class="cart-toggle" type="button" aria-controls="cart-drawer" aria-expanded="false">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 4h2l2 11h11l3-8H6M9 20h.01M17 20h.01" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span class="cart-word">My order</span><span id="cart-count" class="cart-count">0</span>
-      </button>
-      <button id="nav-toggle" class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-navigation" aria-label="Open navigation menu">
-        <span aria-hidden="true">☰</span>
-      </button>
+      <div class="ems-header-actions">
+        <button id="open-cart" class="cart-toggle ems-cart-button" type="button" aria-label="Open cart" aria-controls="cart-drawer" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 4h2l2 11h11l3-8H6M9 20h.01M17 20h.01" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="cart-count" class="cart-count">0</span>
+        </button>
+        <span class="ems-header-divider" aria-hidden="true"></span>
+        <div class="ems-account" data-account-root>
+        <button id="account-shortcut" class="ems-account-trigger" type="button" aria-label="Open account menu" aria-haspopup="true" aria-expanded="false" aria-controls="account-shortcut-menu">
+          <span class="ems-account-avatar" aria-hidden="true">G</span>
+          <span class="ems-account-stack"><strong class="ems-account-name">Sign in</strong><small class="ems-account-role">Browse as guest</small></span>
+          <span class="ems-account-chevron" aria-hidden="true">⌄</span>
+        </button>
+        <div id="account-shortcut-menu" class="ems-account-menu" hidden>
+          <p class="ems-menu-email">Explore the menu or sign in with Google</p>
+          <button type="button" data-account-action="sign-in" data-signed-out>Continue with Google</button>
+          <button type="button" data-account-action="orders" data-customer-orders hidden>My orders & account</button>
+          <a href="./" data-signed-in hidden>Customer storefront</a>
+          <a href="admin.html" data-manager-access hidden>Staff / Admin workspace</a>
+          <button type="button" class="ems-logout" data-account-action="sign-out" data-signed-in hidden>Sign out</button>
+        </div>
+      </div>
+        <button id="nav-toggle" class="nav-toggle ems-header-menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation" aria-label="Open navigation menu"><span aria-hidden="true">☰</span></button>
+      </div>
     </div>
   </header>
 
