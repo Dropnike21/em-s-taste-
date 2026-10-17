@@ -4,11 +4,33 @@ export const $ = selector => document.querySelector(selector);
 export const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
 export const peso = value => new Intl.NumberFormat("en-PH",{style:"currency",currency:"PHP"}).format(Number(value)||0);
 export const stamp = date => date?.toDate?.()?.toISOString?.().slice(0,10) || "—";
-export const msg = (text,okay=false) => {
-  const el=$("#page-message");
-  el.textContent=text;
-  el.hidden = !text;
-  el.classList.toggle("good",okay);
+let successTimer;
+export const msg = (message, okay = false) => {
+  const errorBox = $("#page-message");
+  const toast = $("#page-toast");
+  clearTimeout(successTimer);
+  if (!message) {
+    errorBox.hidden = true;
+    errorBox.textContent = "";
+    if (toast) { toast.hidden = true; toast.textContent = ""; }
+    return;
+  }
+  if (okay) {
+    errorBox.hidden = true;
+    errorBox.textContent = "";
+    if (toast) {
+      toast.textContent = message;
+      toast.hidden = false;
+      successTimer = setTimeout(() => {
+        toast.hidden = true;
+        toast.textContent = "";
+      }, 3500);
+    }
+    return;
+  }
+  if (toast) { toast.hidden = true; toast.textContent = ""; }
+  errorBox.textContent = message;
+  errorBox.hidden = false;
 };
 export const firebase13="https://www.gstatic.com/firebasejs/13.0.0/";
 export function dateNext() {
