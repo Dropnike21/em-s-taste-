@@ -1,5 +1,5 @@
 import { auth, db } from "./firebase-config.js";
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import { onAuthStateChanged, FacebookAuthProvider, signInWithPopup, signOut, getIdTokenResult } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, serverTimestamp, Timestamp, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 const $ = s => document.querySelector(s);
@@ -19,29 +19,58 @@ function showDashboard() { authorized=true; $("#login-view").hidden=true; $("#da
 onAuthStateChanged(auth, async user => {
   if (!user) { showLogin(); return; }
   try {
-    const access = await getDoc(doc(db,"admins",user.uid));
+    // Require Facebook as the authentication method, not merely a linked provider.
+    const token = await getIdTokenResult(user);
+    if (token.claims?.firebase?.sign_in_provider !== "facebook.com") {
+      showLogin();
+      message("This dashboard requires Facebook sign-in. Please continue with Facebook.");
+      await signOut(auth);
+      return;
+    }
+    const access = await getDoc(doc(db, "admins", user.uid));
     if (!access.exists() || access.data().active !== true) {
-      showLogin(); message("This account is not authorized for Em's Taste administration.");
-      await signOut(auth); return;
+      showLogin();
+      // An admin must manually create this UID in the Firestore allowlist.
+      // Show only the currently signed-in person's UID, not other accounts.
+      message("Facebook sign-in succeeded, but access isn't approved yet. Your Firebase UID is: " + user.uid + ". Ask the business owner to approve it in Firestore.");
+      await signOut(auth);
+      return;
     }
     showDashboard();
+    message("Signed in with Facebook as " + (user.displayName || "authorized administrator") + ".", true);
     await refresh();
-  } catch(err) { showLogin(); console.error(err); message("Cannot verify admin access. Check Firestore setup and rules."); }
+  } catch (err) {
+    showLogin();
+    console.error(err);
+    message("Could not verify access. Make sure the Facebook provider, Firestore, and the published rules are configured.");
+  }
 });
-$("#login-form").addEventListener("submit",async e=>{
-  e.preventDefault();
-  const btn=$("#login-submit"); btn.disabled=true;
+$("#facebook-login").addEventListener("click", async () => {
+  const button = $("#facebook-login");
+  button.disabled = true;
+  message("Opening Facebook sign-in…");
   try {
-    await signInWithEmailAndPassword(auth,$("#login-email").value.trim(),$("#login-password").value);
-    $("#login-password").value="";
-  } catch(err) {console.error(err); message("Sign-in unsuccessful. Check email, password and Authentication setup.");}
-  finally {btn.disabled=false;}
-});
-$("#forgot-password").addEventListener("click",async ()=>{
-  const email=$("#login-email").value.trim();
-  if(!email){message("Enter your administrator email address first.");return;}
-  try {await sendPasswordResetEmail(auth,email); message("If the email has an account, a password reset link will be sent.",true);}
-  catch(err){console.error(err);message("Password reset request failed. Check the email and Firebase configuration.");}
+    const provider = new FacebookAuthProvider();
+    // Popup avoids cross-origin redirect storage issues on GitHub Pages.
+    await signInWithPopup(auth, provider);
+  } catch (err) {
+    console.error(err);
+    if (err.code === "auth/popup-closed-by-user" || err.code === "auth/cancelled-popup-request") {
+      message("Facebook sign-in was cancelled.");
+    } else if (err.code === "auth/popup-blocked") {
+      message("Your browser blocked the Facebook window. Allow popups for this site, then try again.");
+    } else if (err.code === "auth/operation-not-allowed") {
+      message("Facebook sign-in isn't enabled yet in Firebase Authentication.");
+    } else if (err.code === "auth/unauthorized-domain") {
+      message("This site domain must be added under Firebase Authentication → Authorized domains.");
+    } else if (err.code === "auth/account-exists-with-different-credential") {
+      message("A Firebase account already uses this email with another sign-in method. The owner must link Facebook to that account or authorize the new Facebook UID.");
+    } else {
+      message("Facebook sign-in failed. Check Meta App configuration and Firebase OAuth settings.");
+    }
+  } finally {
+    button.disabled = false;
+  }
 });
 $("#sign-out").addEventListener("click",async()=>{await signOut(auth);message("Signed out.",true);});
 $("#refresh-dashboard").addEventListener("click",refresh);
