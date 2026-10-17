@@ -134,13 +134,13 @@ async function getRole(user) {
       ["admin", "staff"].includes(team.data().role)) return team.data().role;
   return null;
 }
-async function loadAll() {
+async function loadAll(force = false) {
   if (!role || loading) return;
   loading = true;
   const button = $("#refresh-dashboard");
   button.disabled = true;
   button.textContent = "Refreshing…";
-  msg("Refreshing workspace data…", true);
+  msg("");
   try {
     const tasks = [
       ["Menu", refreshMenu()],
@@ -150,7 +150,7 @@ async function loadAll() {
     ];
     if (role === "admin") {
       tasks.push(["Ordering controls", refreshSettings()]);
-      tasks.push(["Customer directory", refreshPeople()]);
+      tasks.push(["User directory", refreshPeople(force)]);
       tasks.push(["Customer reports", refreshReports()]);
     }
     const settled = await Promise.allSettled(tasks.map(([, task]) => task));
@@ -170,7 +170,7 @@ async function loadAll() {
     if (errors.length) {
       msg("Could not load: " + errors.join(", ") + ". Other sections may still be available. Check Firestore permissions and try Refresh.");
     } else {
-      msg("Workspace updated.", true);
+      msg("");
     }
   } finally {
     loading = false;
@@ -266,7 +266,7 @@ $("#sign-out").addEventListener("click", async () => {
   catch (error) { console.error(error); msg("Could not sign out. Please try again."); }
   finally { $("#sign-out").disabled = false; }
 });
-$("#refresh-dashboard").addEventListener("click", loadAll);
+$("#refresh-dashboard").addEventListener("click", () => loadAll(true));
 $("#workspace-mobile-nav").addEventListener("click", () => {
   const area = $(".workspace-nav-area");
   const open = area.classList.toggle("mobile-open");
