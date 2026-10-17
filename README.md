@@ -30,6 +30,30 @@ All staff operations **plus**:
 - Private ratings and operational insights.
 - Administrator-only reports, bug triage, service issues, and resolution statuses.
 
+## Menu templates and simplified staff workflow
+
+The **Menu & products** form now starts with a grouped dropdown containing **30 curated, unranked Filipino dishes**. These are reference templates, not confirmed production items or a numerical national popularity ranking. Staff can select a familiar meal and its name/description will be prefilled, or click **Create a custom dish** to enter an original meal. Prices are intentionally **not** supplied; staff must enter a real whole-peso price.
+
+**No templates are automatically written to Firestore or shown as available.** A meal is saved only when staff confirms the details and selects Save. Newly added dishes default to **Unavailable** until staff explicitly makes them available. Existing meals in Firestore are not overwritten during template initialization. If a selected template already exists, the form opens its existing record for editing.
+
+The saved-menu filter supports Current / Archived / All. Staff can **Edit**, **Pause**, or **Archive** meals. Archiving sets `archived:true` and `available:false`. **Restore** keeps the meal unavailable until staff deliberately enables it. Archived products are excluded from the customer-facing menu but remain in Firestore to preserve references in previous orders.
+
+Template source references:
+- https://www.tasteatlas.com/philippines
+- https://www.pna.gov.ph/articles/1273614
+
+## Team roster loading and refresh
+
+The Administrator-only **Team permissions** section fetches the `team` collection when the workspace is first opened. This read is **independent of the customer directory** and cached in memory for **5 minutes**. The roster also identifies the **currently signed-in original owner** if their `admins/{uid}` record is active; the original owners collection cannot be publicly listed under existing rules.
+
+- **Refresh** button in Team permissions: immediately re-reads the authorized roster.
+- Automatic refresh: at most one roster refresh every five minutes while the tab is visible and an authorized administrator is signed in.
+- When returning from a background tab or opening the Team permissions section, stale team data is fetched. Fresh cached data is reused.
+- Saving a team assignment triggers a fresh roster fetch.
+- Signing out clears the in-memory cached list.
+
+This minimizes repeat Firestore reads while still surfacing staff role changes. No changes to Firestore security rules are required for these interface updates.
+
 ## Architecture and modules
 
 \`\`\`text
@@ -42,6 +66,7 @@ admin.js                    Tiny workspace entry point
 workspace/core.js           Google authentication, role resolution, visible tabs
 workspace/shared.js         Common UI helpers
 workspace/menu.js           Food catalog / price / availability / menu suggestions
+workspace/filipino-dishes.js 30 curated Filipino meal templates (local only)
 workspace/orders.js         Regular transaction status, manual payment status, CSV export
 workspace/bulk.js           Bulk inquiries, manual quote and approval
 workspace/prep.js           Dish/workplace cooking preparation totals and CSV
