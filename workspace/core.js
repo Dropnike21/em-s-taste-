@@ -19,6 +19,20 @@ function showLogin(){
  $("#dashboard-view").hidden=true;
  $("#sign-out").hidden=true;
 }
+function displayHelp(user, reason) {
+ const help=$("#admin-access-help");
+ help.hidden=false;
+ help.open=true;
+ $("#admin-help-reason").textContent=reason;
+ $("#admin-help-email").textContent=user?.email||"Unknown Google account";
+ $("#admin-help-uid").textContent=user?.uid||"Not signed in";
+ $("#google-login").textContent="Switch or retry Google account";
+}
+function hideHelp() {
+ $("#admin-access-help").hidden=true;
+ $("#admin-access-help").open=false;
+ $("#google-login").innerHTML='<span class="google-mark" aria-hidden="true">G</span> Continue with Google';
+}
 function showDashboard(access){
  role=access;
  $("#login-view").hidden=true;
@@ -51,12 +65,12 @@ function activateTab(id){
 async function getRole(user){
  const token=await getIdTokenResult(user);
  if(token.claims?.firebase?.sign_in_provider!=="google.com")return null;
- // Legacy owner record is preserved: no migration required.
- const [owner,member]=await Promise.all([
-  getDoc(doc(db,"admins",user.uid)),
-  getDoc(doc(db,"team",user.uid))
- ]);
+ // Query the original owner record FIRST. A missing team document must never
+ // prevent an already-authorized owner from opening their dashboard.
+ const owner=await getDoc(doc(db,"admins",user.uid));
  if(owner.exists()&&owner.data().active===true)return "admin";
+ // Secondary authorization for staff and delegated administrators.
+ const member=await getDoc(doc(db,"team",user.uid));
  if(member.exists()&&member.data().active===true&&["admin","staff"].includes(member.data().role)){
   return member.data().role;
  }
@@ -77,17 +91,27 @@ async function loadAll(){
  else msg("Workspace refreshed.",true);
 }
 onAuthStateChanged(auth,async user=>{
- if(!user){showLogin();return;}
+ if(!user){showLogin();hideHelp();msg("");return;}
  try{
   const access=await getRole(user);
   if(!access){
    showLogin();
-   msg("Google sign-in succeeded, but this account is not approved for staff access. Firebase UID: "+user.uid+". The owner must create an authorized team record in Firestore.");
+   msg("Google sign-in succeeded, but this account has no active staff/admin permission.");
+   displayHelp(user,"Your Google account is recognized. Check that this exact UID has an active owner or team record in Firestore.");
    return;
   }
+  hideHelp();
   showDashboard(access);
   await loadAll();
- }catch(error){console.error(error);showLogin();msg("Cannot verify role. Check published Firestore rules and team permissions.");}
+ }catch(error){
+  console.error("Unable to verify workspace access:",error);
+  showLogin();
+  const reason=error.code==="permission-denied"
+   ? "Firestore blocked the administrator record lookup. The security rules may not be published or may deny this user's UID."
+   : "Cannot verify your access because Firebase returned an error ("+(error.code||"unknown")+"). Check the console configuration.";
+  msg(reason);
+  displayHelp(user,reason);
+ }
 });
 $("#google-login").addEventListener("click",async()=>{
  const button=$("#google-login");button.disabled=true;
