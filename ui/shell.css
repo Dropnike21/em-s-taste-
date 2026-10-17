@@ -1,0 +1,83 @@
+/* Em's Taste unified shell (customer + staff + administrator). */
+:root{--ems-accent:#ad4e32;--ems-accent-dark:#853c29;--ems-bg:#fff9f1;--ems-espresso:#38281f;--ems-border:#ead8c7;--ems-sage:#708566}
+.ems-header{background:#fffbf6!important;border-bottom:1px solid var(--ems-border)!important;box-shadow:0 3px 20px #49321d10;position:sticky;top:0;z-index:55}
+.ems-header .ems-header-inner{width:min(1370px,calc(100% - 50px));min-height:75px;display:flex;align-items:center;gap:22px}
+.ems-header .brand{white-space:nowrap;gap:9px}
+.ems-header .brand img{width:46px;height:46px}
+.ems-header .brand-text strong{font:700 23px/1.15 var(--heading)}
+.ems-header .brand-text small{font-size:8px;letter-spacing:2px}
+.ems-primary-nav{display:flex;align-items:center;gap:3px;margin-inline:auto}
+.ems-primary-nav a,.ems-primary-nav button{display:inline-flex;align-items:center;justify-content:center;padding:11px 14px;min-height:42px;border:0;border-radius:10px;font:700 12px/1.3 var(--body);color:#655245;white-space:nowrap;background:transparent;text-decoration:none}
+.ems-primary-nav a:hover,.ems-primary-nav button:hover{background:#f8ecdf;color:var(--ems-accent)}
+.ems-header-actions{display:flex;align-items:center;gap:10px;margin-left:auto;flex-shrink:0}
+.ems-cart-button,.ems-workspace-home{position:relative;display:grid;place-items:center;width:45px;height:45px;background:#aa4c32;border:1px solid #aa4c32;border-radius:13px;color:#fff;box-shadow:0 5px 14px #b9694a24;transition:transform .16s,background .16s}
+.ems-cart-button:hover,.ems-workspace-home:hover{background:#843925;color:#fff;transform:translateY(-2px)}
+.ems-cart-button svg,.ems-workspace-home svg{width:22px;height:22px;stroke:currentColor}
+.ems-cart-button .cart-word{display:none}
+.ems-cart-button .cart-count{position:absolute;right:-8px;top:-8px;min-width:21px;width:auto;padding-inline:4px;height:21px;background:#783726;border:2px solid #fffbf6;display:grid;place-items:center;border-radius:20px;font-size:10px;line-height:1;color:white}
+.ems-header-divider{height:31px;width:1px;background:#dfc8b8;margin:0 3px}
+.ems-account{position:relative;min-width:0}
+.ems-account-trigger{display:flex;align-items:center;gap:10px;border:1px solid #eddfd2;border-radius:13px;padding:6px 10px 6px 6px;background:#fffefa;box-shadow:0 4px 12px #4930190b;color:var(--ems-espresso);min-height:53px;min-width:184px;max-width:247px;text-align:left}
+.ems-account-trigger:hover{border-color:#d3ac93;background:#fff8f0}
+.ems-account-avatar{width:37px;height:37px;flex-shrink:0;border-radius:11px;display:grid;place-items:center;background:#f3ddc9;border:1px solid #e7c5a9;font:700 17px var(--heading);color:#a34c30}
+.ems-account-stack{display:flex;min-width:0;flex:1;flex-direction:column;gap:2px}
+.ems-account-name{font:700 12px/1.3 var(--body);max-width:150px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.ems-account-role{color:#5c794f;background:#ebf0e6;border-radius:15px;padding:2px 8px;font:700 10px/1.4 var(--body);align-self:flex-start}
+.ems-account-chevron{font-size:13px;color:#927a69;padding-left:2px}
+.ems-account-menu{position:absolute;right:0;top:calc(100% + 8px);width:min(286px,calc(100vw - 28px));z-index:90;background:#fffefa;border:1px solid #e8d5c3;border-radius:14px;padding:10px;box-shadow:0 18px 55px #38251a24}
+.ems-account-menu[hidden]{display:none!important}
+.ems-menu-email{margin:4px 9px 9px;border-bottom:1px solid #eee2d4;padding:3px 0 11px;color:#7a685b;font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+.ems-account-menu a,.ems-account-menu button{display:flex;align-items:center;gap:8px;width:100%;border:0;background:transparent;text-align:left;color:#584439;padding:11px;border-radius:8px;font:700 12px var(--body);text-decoration:none}
+.ems-account-menu a:hover,.ems-account-menu button:hover{background:#f8ebdb;color:#8a3b28}
+.ems-account-menu .ems-logout{color:#a3462f;border-top:1px solid #f1e1d2;border-radius:0;margin-top:4px}
+.ems-header-menu-toggle{display:none;flex-shrink:0;place-items:center;width:41px;height:41px;background:#fff8ee;border:1px solid #e6d4c2;border-radius:11px;color:var(--ems-accent);font-size:22px}
+.ems-loading-overlay{position:fixed;inset:0;display:grid;place-items:center;z-index:150;background:rgba(250,242,230,.85);backdrop-filter:blur(5px)}
+.ems-loading-overlay[hidden]{display:none!important}
+.ems-loader-card{display:flex;align-items:center;flex-direction:column;gap:9px;padding:33px 35px 28px;text-align:center;background:#fffaf4;border:1px solid #ead8c4;border-radius:20px;width:min(335px,calc(100vw - 35px));box-shadow:0 19px 60px #49301d18;color:#5f4033}
+.ems-loader-card img{width:66px;height:66px;animation:ems-bowl-wiggle 1.45s ease-in-out infinite alternate}
+.ems-loader-brand{letter-spacing:3px;color:#a84b31;font-size:10px;font-weight:800}
+.ems-loader-card strong{font:600 20px var(--heading);margin-top:1px}
+.ems-loader-message{color:#857061;font-size:12px}
+.ems-loader-progress{margin-top:9px;width:180px;height:6px;border-radius:20px;overflow:hidden;background:#f1dfcd}
+.ems-loader-progress i{display:block;width:50%;height:100%;border-radius:20px;background:#bc5c3a;animation:ems-load-slide 1.2s ease-in-out infinite alternate}
+@keyframes ems-load-slide{from{transform:translateX(-40%)}to{transform:translateX(150%)}}
+@keyframes ems-bowl-wiggle{from{transform:translateY(1px)}to{transform:translateY(-6px)}}
+@media(max-width:1030px){
+ .ems-primary-nav{gap:0}
+ .ems-primary-nav a{font-size:11px;padding:9px}
+ .ems-header .ems-header-inner{gap:12px;width:calc(100% - 30px)}
+ .ems-account-trigger{min-width:170px;max-width:200px}
+}
+@media(max-width:820px){
+ .ems-header-menu-toggle{display:grid}
+ .ems-primary-nav{display:none;position:absolute;top:100%;left:0;right:0;max-height:calc(100dvh - 80px);overflow:auto;background:#fffefa;border-bottom:1px solid #e9d6c4;padding:9px 17px;z-index:64;box-shadow:0 14px 28px #48321b1a}
+ .ems-primary-nav.is-open{display:flex;align-items:stretch;flex-direction:column;gap:0}
+ .ems-primary-nav a,.ems-primary-nav button{justify-content:flex-start;font-size:13px;padding:13px 15px}
+ .ems-header .ems-header-inner{min-height:66px}
+ .ems-header .brand img{width:40px;height:40px}
+ .ems-header .brand-text strong{font-size:19px}
+}
+@media(max-width:530px){
+ .ems-header .ems-header-inner{width:calc(100% - 20px);gap:7px;min-height:63px}
+ .ems-header .brand{margin-right:auto;gap:4px}
+ .ems-header .brand img{width:35px;height:35px}
+ .ems-header .brand-text strong{font-size:17px}
+ .ems-header .brand-text small{font-size:6px;letter-spacing:1px}
+ .ems-header-actions{gap:6px}
+ .ems-header-divider{display:none}
+ .ems-cart-button,.ems-workspace-home{width:39px;height:39px;border-radius:10px}
+ .ems-cart-button svg,.ems-workspace-home svg{width:19px;height:19px}
+ .ems-account-trigger{min-width:0;max-width:145px;min-height:41px;padding:4px 6px 4px 4px;gap:5px;border-radius:10px}
+ .ems-account-avatar{height:31px;width:31px;border-radius:8px;font-size:13px}
+ .ems-account-name{font-size:10px;max-width:85px}
+ .ems-account-role{font-size:8px;padding:2px 5px}
+ .ems-account-chevron{font-size:11px}
+ .ems-header-menu-toggle{width:33px;height:36px;font-size:18px}
+}
+@media(max-width:380px){
+ .ems-header .brand img{width:32px;height:32px}
+ .ems-header .brand-text strong{font-size:15px}
+ .ems-account-trigger{max-width:123px}
+ .ems-account-name{max-width:70px}
+}
+@media(prefers-reduced-motion:reduce){.ems-loader-card img,.ems-loader-progress i{animation:none}}
