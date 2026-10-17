@@ -128,6 +128,10 @@
       const image = typeof item.image === "string" && /^(https?:\/\/|\.\.?\/|images\/)/i.test(item.image)
         ? `<img loading="lazy" src="${html(item.image)}" alt="${html(item.name)}">`
         : bowlIcon;
+      const photoCredit = item.imageSource && /^https:\/\//i.test(item.imageSource)
+        ? `<small class="food-photo-credit">Example photo: <a href="${html(item.imageSource)}" target="_blank" rel="noopener noreferrer">${html(item.imageCredit || "Wikimedia Commons contributor")}</a>${item.imageLicense ? " · " + (item.imageLicenseUrl && /^https:\/\//i.test(item.imageLicenseUrl) ?
+          `<a href="${html(item.imageLicenseUrl)}" target="_blank" rel="noopener noreferrer">${html(item.imageLicense)}</a>` : html(item.imageLicense)) : ""}</small>`
+        : "";
       return `<article class="food-card">
         <div class="food-visual ${["sage", "coral", "cream"].includes(item.palette) ? item.palette : ""}">
           <span class="food-tag">${html(previewOnly ? "Example only" : unavailable ? "Unavailable" : item.tag || "Home-cooked")}</span>${image}
@@ -136,6 +140,7 @@
           <p class="food-category">${item.category === "sides" ? "Rice & extras" : "Home-cooked ulam"}</p>
           <h3>${html(item.name)}</h3>
           <p class="food-description">${html(item.description)}</p>
+          ${photoCredit}
           <div class="food-bottom"><span class="price">${money(Number(item.price) || 0)}</span>
           <button type="button" class="add-button" data-add="${html(item.id)}" ${unavailable ? "disabled" : ""} aria-label="${previewOnly ? "Example item only" : "Add " + html(item.name) + " to order"}">${previewOnly ? "Preview only" : unavailable ? "Unavailable" : "+ Add to order"}</button></div>
         </div>
