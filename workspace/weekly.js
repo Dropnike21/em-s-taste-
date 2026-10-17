@@ -1,5 +1,5 @@
 import {db,$,esc,peso,msg} from "./shared.js";
-import {eligibleProducts,menuItems} from "./menu.js";
+import {eligibleProducts,allProducts} from "./menu.js";
 import {doc,getDoc,writeBatch,serverTimestamp} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
 
 const days=["Monday","Tuesday","Wednesday","Thursday","Friday"];
@@ -55,15 +55,21 @@ function renderProducts(){
  renderDayTabs();
  const selected=daysSelected[dayIndex];
  const query=$("#weekly-search").value.trim().toLowerCase();
- const all=menuItems().filter(d=>String(d.name).toLowerCase().includes(query));
+ const all=allProducts().filter(d=>String(d.name).toLowerCase().includes(query));
+ // Keep retired selections visible so staff can uncheck and remove them.
+ for(const id of selected){
+  if(!all.some(d=>d.id===id)&&!allProducts().some(d=>d.id===id)){
+   all.push({id,name:"Retired product: "+id,price:0});
+  }
+ }
  const eligibleIds=new Set(eligibleProducts().map(d=>d.id));
  $("#weekly-products").innerHTML=all.map(d=>{
   const eligible=eligibleIds.has(d.id);
   const checked=selected.has(d.id);
   return '<label class="weekly-product'+(!eligible?" weekly-product-disabled":"")+'">'+
     '<input type="checkbox" data-week-product="'+esc(d.id)+'"'+(checked?" checked":"")+
-    (!eligible?" disabled":"")+'><span><strong>'+esc(d.name)+'</strong><small>'+
-    (eligible?peso(d.price):"Set a price and activate in Products")+
+    (!eligible&&!checked?" disabled":"")+'><span><strong>'+esc(d.name)+'</strong><small>'+
+    (eligible?peso(d.price):checked?"No longer active — uncheck to remove":"Set a price and activate in Products")+
     '</small></span></label>';
  }).join("") || '<p class="muted">No products match. Set up your catalog in Menu & products first.</p>';
  $("#weekly-copy-day").disabled=false;
