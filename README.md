@@ -26,7 +26,7 @@
 All staff operations **plus**:
 - Admin-only global ordering schedule/availability.
 - Customer directory and account-blocking.
-- Staff/admin role assignments using Firebase UIDs.
+- Searchable Users & roles directory; promote registered customers to staff/admin without copying their Firebase UIDs.
 - Private ratings and operational insights.
 - Administrator-only reports, bug triage, service issues, and resolution statuses.
 
@@ -42,17 +42,22 @@ Template source references:
 - https://www.tasteatlas.com/philippines
 - https://www.pna.gov.ph/articles/1273614
 
-## Team roster loading and refresh
+## Users & roles — manage customers without UID lookups
 
-The Administrator-only **Team permissions** section fetches the `team` collection when the workspace is first opened. This read is **independent of the customer directory** and cached in memory for **5 minutes**. The roster also identifies the **currently signed-in original owner** if their `admins/{uid}` record is active; the original owners collection cannot be publicly listed under existing rules.
+The admin-only **Users & roles** screen combines registered customer profiles from `customers/{uid}` and existing authorized members from `team/{uid}`. It includes the signed-in protected owner if their `admins/{uid}` record is active. Registered customers appear under their names and Google email addresses, with **Customer** as the default role.
 
-- **Refresh** button in Team permissions: immediately re-reads the authorized roster.
-- Automatic refresh: at most one roster refresh every five minutes while the tab is visible and an authorized administrator is signed in.
-- When returning from a background tab or opening the Team permissions section, stale team data is fetched. Fresh cached data is reused.
-- Saving a team assignment triggers a fresh roster fetch.
-- Signing out clears the in-memory cached list.
+- Search by name, email, or UID and filter by Customer, Staff, or Administrator.
+- Change a user's role from their row: **Customer → Staff**, **Customer → Administrator**, or **Staff/Admin → Customer**.
+- Staff and delegated administrators have trusted `team/{uid}` role records; reverting to Customer deletes their team role record but **does not delete their customer profile or order history**.
+- A protected original owner's `admins/{uid}` record cannot be altered by the public website or the role selector; administrators cannot change their own role.
+- Block or unblock customer ordering separately from staff permissions; blocking orders does not revoke admin/team authorization.
+- On administrator sign-in, the directory fetches the first 100 customer profiles plus the current authorized team. **Load more users** pages through additional customer profiles as needed.
+- The list is cached for five minutes, refreshes automatically when the page is active, and supports **↻ Refresh users** after changes.
+- Customers who sign in via the customer storefront get a Firestore profile. New Google users entering via the staff login also receive a customer profile, even when their team role is awaiting approval. This allows them to appear in the directory after sign-in.
 
-This minimizes repeat Firestore reads while still surfacing staff role changes. No changes to Firestore security rules are required for these interface updates.
+**Scope limitation:** A static GitHub Pages site cannot use Firebase Admin SDK to enumerate *every* Firebase Authentication account. Historical Auth-only accounts with **no Firestore customer or team document** will not appear until they next sign into the updated website (or are synchronized by a future trusted Cloud Function). This directory does **not** claim to be a complete export of Firebase Authentication. A manual UID-based advanced form remains for exceptional legacy accounts.
+
+**Security:** All role changes are authorized by Firestore's existing `isAdmin()` rule. The browser never receives a service-account secret or permission to create owner records under `admins`. Existing Firestore rules do not need changes for this UI update.
 
 ## Architecture and modules
 
@@ -101,14 +106,15 @@ Access is enforced by **Firestore Security Rules**, not solely by hidden navigat
 The original owner administrator setup **continues working**: in Firestore collection **\`admins\`**, document ID **your Google Firebase Authentication UID**, add **\`active: true\`** (Boolean). **Never** put this UID in source code or permit public writes to \`admins\`.
 
 To authorize other team members:
-1. The intended staff member signs into \`admin.html\` using Google.
-2. On first sign-in, the page displays their UID and says access is not approved.
-3. The approved owner signs in and opens **Team permissions**.
-4. Enter the new member's **Firebase UID**, select staff/admin, set Active, save.
-5. The member refreshes and signs in again. Firestore rules check their active role under \`team/{uid}\`.
-6. A staff user **cannot change their own or anyone else's role**.
 
-\`admins/{uid}\` records are intentionally owner-managed only through a trusted Firebase Console/Admin SDK. Administrators can manage staff/admin roles in \`team/{uid}\`.
+1. Have the customer or intended team member sign into the website with Google.
+2. Sign into the administrator portal, open **Users & roles**, and find their name/email.
+3. Choose **Staff** or **Administrator** from the role selector and tap **Save role**.
+4. The user should sign out and sign back in to the staff portal so their role is rechecked.
+5. To demote someone, select **Customer**; their order history remains intact and the team authorization document is deleted.
+
+Only authorized administrators can change user roles; the original owner record remains protected.
+
 
 ## Firestore collections and formats
 
