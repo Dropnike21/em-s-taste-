@@ -18,6 +18,7 @@
 - Menu CRUD (add/edit, name, description, price, image link, category, availability).
 - Read meal requests / menu suggestions, but NOT general customer complaints or directory information.
 - View recent normal-order / transaction history, manage fulfillment status, record manual **payment status**, export recent transactions as CSV.
+- **Kitchen prep view:** consolidated confirmed/completed servings grouped by dish, workplace and service date, with a CSV packing/cooking sheet.
 - Review and quote bulk inquiries, then mark under review, confirmed, declined or completed. Quotes and payment flags are **internal**, not an online payment gateway.
 - Cannot grant roles, access customer directories, manage customer reports, change global ordering settings, or make customers administrators.
 
@@ -43,6 +44,7 @@ workspace/shared.js         Common UI helpers
 workspace/menu.js           Food catalog / price / availability / menu suggestions
 workspace/orders.js         Regular transaction status, manual payment status, CSV export
 workspace/bulk.js           Bulk inquiries, manual quote and approval
+workspace/prep.js           Dish/workplace cooking preparation totals and CSV
 workspace/settings.js       Admin-only global ordering hours / service date settings
 workspace/insights.js       Admin-only recent dishes and verified rating insights
 workspace/people.js         Admin-only customers, blocked users and staff permissions
