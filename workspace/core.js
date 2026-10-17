@@ -10,7 +10,7 @@ import { initBulk, refreshBulk } from "./bulk.js";
 import { initPrep, refreshPrep } from "./prep.js";
 import { initSettings, refreshSettings } from "./settings.js";
 import { refreshInsights } from "./insights.js";
-import { initPeople, refreshPeople } from "./people.js";
+import { initPeople, refreshPeople, refreshTeam, clearTeamCache } from "./people.js";
 import { initReports, refreshReports } from "./reports.js";
 import { refreshOverview } from "./overview.js";
 
@@ -80,6 +80,9 @@ function activateTab(panelId, changeHistory = false) {
   $("#workspace-page-desc").textContent = subtitle;
   if (changeHistory) history.replaceState(null, "", "#" + panelId);
   closeMobileNav();
+  if (panelId === "team-panel" && role === "admin") {
+    refreshTeam().catch(error => console.error("Team directory refresh failed:", error));
+  }
   if (window.matchMedia("(max-width: 860px)").matches) {
     $("#workspace-page-title").scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -196,6 +199,7 @@ async function authorize(user) {
 onAuthStateChanged(auth, async user => {
   if (!user) {
     authAttempt += 1;
+    clearTeamCache();
     showLogin();
     hideHelp();
     msg("");
@@ -276,6 +280,18 @@ window.addEventListener("ems-workspace-orders-updated", () => {
 });
 window.addEventListener("ems-workspace-menu-updated", () => {
   if (role) refreshOverview().catch(error => console.error(error));
+});
+
+// Only active administrator sessions may load private team data.
+// Hidden/background tabs do not repeatedly query Firestore.
+window.setInterval(() => {
+  if (role !== "admin" || !auth.currentUser || document.visibilityState !== "visible") return;
+  refreshTeam().catch(error => console.error("Scheduled team refresh failed:", error));
+}, 5 * 60 * 1000);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && role === "admin") {
+    refreshTeam().catch(error => console.error("Team refresh on return failed:", error));
+  }
 });
 
 initMenu(); initOrders(); initBulk(); initPrep(); initSettings(); initPeople(); initReports();
