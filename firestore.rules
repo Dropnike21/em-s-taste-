@@ -93,25 +93,25 @@ service cloud.firestore {
         (lines.size() > 4 ? lineTotal(lines[4]) : 0) +
         (lines.size() > 5 ? lineTotal(lines[5]) : 0);
     }
-    function validOrder(order) {
-      return order.keys().hasAll(['customerUid','customerName','workplace','note','items','total','serviceDate','serviceDay','createdAt','status']) &&
-        order.keys().hasOnly(['customerUid','customerName','workplace','note','items','total','serviceDate','serviceDay','createdAt','status']) &&
-        order.customerUid == request.auth.uid &&
-        order.customerName is string &&
-        order.customerName.size() >= 2 && order.customerName.size() <= 80 &&
-        order.workplace is string &&
-        order.workplace.size() >= 2 && order.workplace.size() <= 100 &&
-        order.note is string && order.note.size() <= 240 &&
-        order.status == 'pending' &&
-        order.createdAt == request.time &&
-        order.serviceDate is timestamp &&
-        order.serviceDate == nextWorkdayDate() &&
-        order.serviceDay == get(storefrontPath()).data.menuDayKey &&
-        order.total is int &&
-        order.total >= 1 && order.total <= 3000 &&
-        validLines(order.items) &&
-        totalUnits(order.items) <= 10 &&
-        order.total == verifiedTotal(order.items);
+    function validOrder(orderData) {
+      return orderData.keys().hasAll(['customerUid','customerName','workplace','note','items','total','serviceDate','serviceDay','createdAt','status']) &&
+        orderData.keys().hasOnly(['customerUid','customerName','workplace','note','items','total','serviceDate','serviceDay','createdAt','status']) &&
+        orderData.customerUid == request.auth.uid &&
+        orderData.customerName is string &&
+        orderData.customerName.size() >= 2 && orderData.customerName.size() <= 80 &&
+        orderData.workplace is string &&
+        orderData.workplace.size() >= 2 && orderData.workplace.size() <= 100 &&
+        orderData.note is string && orderData.note.size() <= 240 &&
+        orderData.status == 'pending' &&
+        orderData.createdAt == request.time &&
+        orderData.serviceDate is timestamp &&
+        orderData.serviceDate == nextWorkdayDate() &&
+        orderData.serviceDay == get(storefrontPath()).data.menuDayKey &&
+        orderData.total is int &&
+        orderData.total >= 1 && orderData.total <= 3000 &&
+        validLines(orderData.items) &&
+        totalUnits(orderData.items) <= 10 &&
+        orderData.total == verifiedTotal(orderData.items);
     }
 
     match /admins/{uid} {
