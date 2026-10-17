@@ -19,12 +19,9 @@ let loadingMore = false;
 let generation = 0;
 
 function statusText(text) {
-  $("#team-refresh-status").textContent = text;
-}
-function timePH() {
-  return new Intl.DateTimeFormat("en-PH", {
-    timeZone: "Asia/Manila", hour: "numeric", minute: "2-digit"
-  }).format(new Date());
+  const element = $("#team-refresh-status");
+  element.textContent = text;
+  element.hidden = !text;
 }
 function roleOf(uid) {
   if (uid === ownerUid) return "owner";
@@ -88,15 +85,18 @@ function render() {
       esc((user.displayName || "?").slice(0,1).toUpperCase()) + '</div>' +
       '<div class="user-identity-text"><strong>' + esc(user.displayName) + '</strong>' +
       '<span>' + esc(user.email || "No customer email on record") + '</span>' +
-      '<small>' + esc(user.hasProfile ? "Registered customer profile" : "Team record only") +
-      (user.blocked ? " · Blocked from ordering" : "") + '</small></div></div>' +
-      '<div class="user-row-controls"><span class="user-role-badge ' + esc(user.role) + '">' + badge + '</span>' +
+      (user.blocked || !user.hasProfile
+        ? '<small>' + esc(!user.hasProfile ? "Staff record only" : "Ordering blocked") +
+          (user.blocked && !user.hasProfile ? " · Ordering blocked" : "") + '</small>'
+        : "") + '</div></div>' +
+      '<div class="user-row-controls">' +
+      (locked ? '<span class="user-role-badge ' + esc(user.role) + '">' + badge + '</span>' : "") +
       (locked
         ? '<small class="user-protected-label">' + (user.currentOwner ? "Owner access is protected" : "Cannot change your own role") + "</small>"
-        : '<label class="user-role-picker"><span>Role</span><select data-user-role="' +
+        : '<label class="user-role-picker"><span class="sr-only">Role for ' + esc(user.displayName) + '</span><select data-user-role="' +
           esc(user.uid) + '">' + options + '</select></label>' +
           '<button type="button" class="button button-outline" data-save-user="' +
-          esc(user.uid) + '">Save role</button>') +
+          esc(user.uid) + '" disabled>Save</button>') +
       (user.hasProfile && !user.isSelf
         ? '<button type="button" class="user-block-button" data-block-user="' + esc(user.uid) + '">' +
           (user.blocked ? "Unblock orders" : "Block orders") + '</button>'
@@ -105,11 +105,9 @@ function render() {
   }).join("") :
   '<div class="empty-workspace-state"><strong>No matching accounts</strong>' +
   '<p>Try a different name, email, or role filter. You can load more customer profiles below.</p></div>';
-  const hasTeamOnly = list.some(person => !person.hasProfile);
-  $("#users-visible-count").textContent =
-    "Loaded " + profiles.size + " of " + profileTotal + " customer profiles" +
-    (hasTeamOnly ? " · Team-only users shown separately" : "") +
-    " · " + visible.length + " matching accounts";
+  $("#users-visible-count").textContent = visible.length + " user" +
+    (visible.length === 1 ? "" : "s") + " shown" +
+    (profiles.size < profileTotal ? " · " + profileTotal + " registered customers total" : "");
   $("#users-load-more").hidden = !hasMore;
 }
 
@@ -127,9 +125,7 @@ export async function refreshTeam(force = false) {
   if (!force && lastLoaded && Date.now() - lastLoaded < FIVE_MINUTES) return;
   const accountUid = user.uid;
   const version = ++generation;
-  const button = $("#refresh-team");
-  button.disabled = true;
-  statusText("Loading registered users and their access levels…");
+  statusText("Loading users…");
   loading = (async () => {
     try {
       const [page, teamSnapshot, owner, count] = await Promise.all([
@@ -147,19 +143,18 @@ export async function refreshTeam(force = false) {
       hasMore = page.size === PAGE_SIZE;
       lastLoaded = Date.now();
       render();
-      statusText("Updated " + timePH() + " PH · List cached for 5 minutes. Use Refresh users for immediate updates.");
+      statusText("");
     } catch (error) {
       console.error("Could not load account directory:", error);
       statusText("Could not read user profiles or role assignments. Verify admin permissions and published Firestore rules.");
       throw error;
     } finally {
-      button.disabled = false;
       loading = null;
     }
   })();
   return loading;
 }
-export const refreshPeople = () => refreshTeam();
+export const refreshPeople = (force = false) => refreshTeam(force);
 
 async function loadMore() {
   if (loadingMore || !hasMore || !auth.currentUser) return;
@@ -176,7 +171,7 @@ async function loadMore() {
     lastProfileDoc = page.docs.at(-1) || lastProfileDoc;
     hasMore = page.size === PAGE_SIZE;
     render();
-    statusText("Loaded " + profiles.size + " customer profiles · Last refreshed " + timePH() + " PH.");
+    statusText("");
   } catch (error) {
     console.error(error);
     msg("Could not load more users. Try again.");
@@ -200,8 +195,9 @@ export function clearTeamCache() {
   $("#users-total").textContent = "—";
   $("#users-staff").textContent = "—";
   $("#users-admins").textContent = "—";
-  $("#users-visible-count").textContent = "No users loaded.";
+  $("#users-visible-count").textContent = "";
   $("#users-load-more").hidden = true;
+  statusText("");
 }
 
 async function saveRole(uid, role, label) {
@@ -230,11 +226,14 @@ async function saveRole(uid, role, label) {
 export function initPeople() {
   $("#users-search").addEventListener("input", render);
   $("#users-role-filter").addEventListener("change", render);
-  $("#users-load-more").addEventListener("click", loadMore);
-  $("#refresh-team").addEventListener("click", async () => {
-    try { await refreshTeam(true); }
-    catch { msg("Could not refresh the users directory. Check Firestore permissions."); }
+  $("#users-directory").addEventListener("change", event => {
+    const select = event.target.closest("[data-user-role]");
+    if (!select) return;
+    const row = select.closest("[data-user-uid]");
+    const button = row?.querySelector("[data-save-user]");
+    if (button) button.disabled = select.value === roleOf(select.dataset.userRole);
   });
+  $("#users-load-more").addEventListener("click", loadMore);
   $("#users-directory").addEventListener("click", async event => {
     const save = event.target.closest("[data-save-user]");
     const block = event.target.closest("[data-block-user]");
