@@ -234,3 +234,33 @@
  .filter-result{margin:0}
  .order-actions select{min-width:125px}
 }
+
+
+/* Easy-start product catalogue and on-demand dish details. */
+.menu-custom-button{margin-top:11px;min-height:41px;width:100%;justify-content:center}
+.dish-editor{margin-top:17px;padding-top:17px;border-top:1px solid var(--line)}
+.dish-editor[hidden]{display:none!important}
+#dish-template{width:100%;font-size:13px}
+.saved-menu-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:13px;margin:0 0 17px}
+.saved-menu-heading h3{margin:0!important}
+.saved-menu-heading label{display:flex;align-items:center;gap:9px;margin:0;font-size:11px;font-weight:700;color:#806d5b;white-space:nowrap}
+.saved-menu-heading select{font:12px var(--body);border:1px solid #dfc9b6;border-radius:7px;background:#fff;padding:7px 9px;color:#674936}
+.dish-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dish-actions button{background:#fffaf6;border:1px solid #d0b29e;border-radius:6px;padding:7px 10px;font-size:11px;font-weight:700;color:#955038}
+.dish-actions button:hover{background:#f1e1d0}
+.dish-actions button[data-archive]{color:#806e60;border-color:#e3d7cb}
+.team-directory-head{display:flex;justify-content:space-between;align-items:flex-start;gap:17px;margin-bottom:9px}
+.team-directory-head h3{margin:0 0 5px!important}
+.team-directory-head p{margin:0}
+.team-directory-head button{flex-shrink:0;white-space:nowrap;min-height:39px;padding:7px 13px}
+.team-refresh-status{font-size:11px;color:#807666;background:#f8f0e5;border:1px solid #eee2d1;border-radius:7px;padding:9px 12px;line-height:1.55}
+.team-role-tag{font-size:10px;color:#7f5533;background:#f7e8d5;border-radius:20px;padding:6px 10px;font-weight:800;white-space:nowrap}
+@media(max-width:610px){
+ .team-directory-head{flex-wrap:wrap;align-items:flex-start}
+ .team-directory-head button{width:auto}
+ .saved-menu-heading{flex-wrap:wrap}
+ .saved-menu-heading label{width:100%;justify-content:space-between}
+ .saved-menu-heading select{max-width:100%}
+ .dish-actions{width:100%}
+ .dish-actions button{flex:1;min-height:37px}
+}
