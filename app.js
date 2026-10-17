@@ -13,6 +13,7 @@
   const reviewOverlay = $("#review-overlay");
   let filter = "all";
   let cart = loadCart();
+  let lastCustomerUid = null;
   let lastFocus = null;
   let orderText = "";
   let schedule = getSchedule();
@@ -280,6 +281,19 @@
     const live = window.EMS_LIVE_STATE;
     const customer = live?.customer;
     const signedIn = Boolean(customer);
+    const currentUid = customer?.uid || null;
+    if (lastCustomerUid && lastCustomerUid !== currentUid) {
+      // Clear the previous account's saved form data on shared devices.
+      cart = {};
+      saveCart();
+      paintCart();
+      $("#customer-name").value = "";
+      $("#workplace").value = "";
+      $("#order-note").value = "";
+      $("#my-orders").textContent = "";
+      $("#orders-details").open = false;
+    }
+    lastCustomerUid = currentUid;
     $("#customer-google-login").hidden = signedIn;
     $("#customer-signout").hidden = !signedIn;
     $("#customer-refresh").hidden = !signedIn;
