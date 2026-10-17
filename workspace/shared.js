@@ -7,6 +7,7 @@ export const stamp = date => date?.toDate?.()?.toISOString?.().slice(0,10) || "â
 export const msg = (text,okay=false) => {
   const el=$("#page-message");
   el.textContent=text;
+  el.hidden = !text;
   el.classList.toggle("good",okay);
 };
 export const firebase13="https://www.gstatic.com/firebasejs/13.0.0/";
