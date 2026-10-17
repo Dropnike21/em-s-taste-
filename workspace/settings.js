@@ -1,5 +1,5 @@
 import {db,$,dateNext,msg} from "./shared.js";
-import {menuItems} from "./menu.js";
+import {eligibleProducts} from "./menu.js";
 import {doc,getDoc,setDoc,serverTimestamp,Timestamp} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
 export async function refreshSettings(){
  const snap=await getDoc(doc(db,"settings","storefront")),s=snap.exists()?snap.data():{};
@@ -15,11 +15,28 @@ export function initSettings(){
    msg("Choose a valid Monday–Friday service date.");return;
   }
   const opening = $("#orders-open").checked;
-  if (opening && !menuItems().some(item => item.available === true)) {
+  if (opening && eligibleProducts().length === 0) {
     msg("Add at least one available dish before enabling online orders.");
     return;
   }
-  if (opening && !confirm("Enable order requests for " + key + "? Check your menu, prices, and workday first.")) return;
+  if (opening) {
+    // A draft or empty weekly plan must not be used for an open ordering day.
+    try {
+      const planned = await getDoc(doc(db,"menuDays",key));
+      if (planned.exists()) {
+        const allowed = new Set(eligibleProducts().map(item => item.id));
+        if (!planned.data().published || !(planned.data().itemIds||[]).some(id=>allowed.has(id))) {
+          msg("Publish at least one active meal for "+key+" in Weekly menu before opening orders.");
+          return;
+        }
+      }
+    } catch (error) {
+      console.error(error);
+      msg("Cannot check the weekly menu. Publish the updated Firestore rules first.");
+      return;
+    }
+  }
+  if (opening && !confirm("Enable order requests for " + key + "? Check your published weekly menu and prices first.")) return;
   const button = $("#settings-form").querySelector('button[type="submit"]');
   button.disabled = true;
   try{
