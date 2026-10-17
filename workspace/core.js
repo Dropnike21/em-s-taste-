@@ -1,131 +1,273 @@
-import {auth,db,$,msg} from "./shared.js";
-import {GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut,getIdTokenResult} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
-import {doc,getDoc} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
-import {initMenu,refreshMenu,refreshSuggestions} from "./menu.js";
-import {initOrders,refreshOrders} from "./orders.js";
-import {initBulk,refreshBulk} from "./bulk.js";
-import {initPrep,refreshPrep} from "./prep.js";
-import {initSettings,refreshSettings} from "./settings.js";
-import {refreshInsights} from "./insights.js";
-import {initPeople,refreshPeople} from "./people.js";
-import {initReports,refreshReports} from "./reports.js";
+import { auth, db, $, msg } from "./shared.js";
+import {
+  GoogleAuthProvider, onAuthStateChanged, signInWithPopup,
+  signOut, getIdTokenResult
+} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
+import { initMenu, refreshMenu, refreshSuggestions } from "./menu.js";
+import { initOrders, refreshOrders } from "./orders.js";
+import { initBulk, refreshBulk } from "./bulk.js";
+import { initPrep, refreshPrep } from "./prep.js";
+import { initSettings, refreshSettings } from "./settings.js";
+import { refreshInsights } from "./insights.js";
+import { initPeople, refreshPeople } from "./people.js";
+import { initReports, refreshReports } from "./reports.js";
+import { refreshOverview } from "./overview.js";
 
-let role=null;
-const staffPanels=["menu-panel","orders-panel","bulk-panel","prep-panel"];
-const adminPanels=["settings-panel","insights-panel","team-panel","reports-panel"];
-function showLogin(){
- role=null;
- $("#login-view").hidden=false;
- $("#dashboard-view").hidden=true;
- $("#sign-out").hidden=true;
+const staffPanels = new Set(["overview-panel", "orders-panel", "bulk-panel", "prep-panel", "menu-panel"]);
+const adminPanels = new Set(["settings-panel", "insights-panel", "reports-panel", "team-panel"]);
+const panelInfo = {
+  "overview-panel": ["Overview", "Your kitchen, at a glance."],
+  "orders-panel": ["Orders & payments", "Review incoming requests, track payment status, and update fulfillment."],
+  "bulk-panel": ["Large meal requests", "Quote and confirm bookings of 51 or more meals."],
+  "prep-panel": ["Kitchen preparation", "Organize confirmed servings by dish and workplace."],
+  "menu-panel": ["Menu & products", "Manage food names, descriptions, prices, and availability."],
+  "settings-panel": ["Ordering controls", "Configure the next meal workday and preorder availability."],
+  "insights-panel": ["Customers & insights", "Review customer activity and completed-meal feedback."],
+  "reports-panel": ["Reports & feedback", "Review customer concerns and resolve reported problems."],
+  "team-panel": ["Team permissions", "Authorize staff and manage access to the workspace."]
+};
+let role = null;
+let loading = false;
+let verifying = false;
+let authAttempt = 0;
+
+function setLoginState(text, error = false) {
+  const el = $("#login-state");
+  el.textContent = text;
+  el.classList.toggle("error", error);
 }
-function displayHelp(user, reason) {
- const help=$("#admin-access-help");
- help.hidden=false;
- help.open=true;
- $("#admin-help-reason").textContent=reason;
- $("#admin-help-email").textContent=user?.email||"Unknown Google account";
- $("#admin-help-uid").textContent=user?.uid||"Not signed in";
- $("#google-login").textContent="Switch or retry Google account";
+function showLogin() {
+  role = null;
+  $("#login-view").hidden = false;
+  $("#dashboard-view").hidden = true;
+  $("#sign-out").hidden = true;
+}
+function showHelp(user, reason) {
+  const el = $("#admin-access-help");
+  el.hidden = false;
+  el.open = true;
+  $("#admin-help-reason").textContent = reason;
+  $("#admin-help-email").textContent = user?.email || "Not signed in";
+  $("#admin-help-uid").textContent = user?.uid || "—";
+  $("#google-login").textContent = "Continue with another Google account";
+  $("#retry-access").hidden = !user;
 }
 function hideHelp() {
- $("#admin-access-help").hidden=true;
- $("#admin-access-help").open=false;
- $("#google-login").innerHTML='<span class="google-mark" aria-hidden="true">G</span> Continue with Google';
+  $("#admin-access-help").hidden = true;
+  $("#admin-access-help").open = false;
+  $("#google-login").innerHTML = '<span class="google-mark" aria-hidden="true">G</span> Continue with Google';
 }
-function showDashboard(access){
- role=access;
- $("#login-view").hidden=true;
- $("#dashboard-view").hidden=false;
- $("#sign-out").hidden=false;
- $("#workspace-role").textContent=role==="admin"?"Administrator workspace":"Staff workspace";
- document.querySelectorAll('[data-roles="admin"]').forEach(el=>{el.hidden=role!=="admin";});
- document.querySelectorAll("[data-panel]").forEach(tab=>{
-  const authorized=staffPanels.includes(tab.dataset.panel)||(role==="admin"&&adminPanels.includes(tab.dataset.panel));
-  tab.hidden=!authorized;
- });
- [...adminPanels,...staffPanels].forEach(id=>{
-  const panel=$("#"+id); if(panel)panel.hidden=true;
- });
- document.querySelectorAll("[data-panel]").forEach(tab=>{
-  tab.classList.remove("active");tab.setAttribute("aria-selected","false");
- });
- activateTab("menu-panel");
+function authorizedPanel(panelId) {
+  return Boolean(role && (staffPanels.has(panelId) || (role === "admin" && adminPanels.has(panelId))));
 }
-function activateTab(id){
- if(!role || (role!=="admin"&&adminPanels.includes(id)))return;
- document.querySelectorAll("[data-panel]").forEach(tab=>{
-  const active=tab.dataset.panel===id;
-  tab.classList.toggle("active",active);
-  tab.setAttribute("aria-selected",String(active));
-  const panel=$("#"+tab.dataset.panel);
-  if(panel)panel.hidden=!active;
- });
+function closeMobileNav() {
+  $(".workspace-nav-area").classList.remove("mobile-open");
+  $("#workspace-mobile-nav").setAttribute("aria-expanded", "false");
 }
-async function getRole(user){
- const token=await getIdTokenResult(user);
- if(token.claims?.firebase?.sign_in_provider!=="google.com")return null;
- // Query the original owner record FIRST. A missing team document must never
- // prevent an already-authorized owner from opening their dashboard.
- const owner=await getDoc(doc(db,"admins",user.uid));
- if(owner.exists()&&owner.data().active===true)return "admin";
- // Secondary authorization for staff and delegated administrators.
- const member=await getDoc(doc(db,"team",user.uid));
- if(member.exists()&&member.data().active===true&&["admin","staff"].includes(member.data().role)){
-  return member.data().role;
- }
- return null;
-}
-async function loadAll(){
- if(!role)return;
- msg("Loading kitchen workspace…");
- const essentials=[refreshMenu(),refreshOrders(),refreshBulk(),refreshSuggestions()];
- if(role==="admin")essentials.push(refreshSettings(),refreshPeople(),refreshReports());
- const outcomes=await Promise.allSettled(essentials);
- if(outcomes[1]?.status==="fulfilled")refreshPrep();
- if(role==="admin"&&outcomes[1]?.status==="fulfilled"){
-  try{await refreshInsights();}catch(error){console.error(error);msg("Operational data loaded, but ratings could not be refreshed.");}
- }
- const fails=outcomes.filter(x=>x.status==="rejected");
- if(fails.length){fails.forEach(x=>console.error(x.reason));msg(fails.length+" workspace section(s) could not load. Check permissions and database setup.");}
- else msg("Workspace refreshed.",true);
-}
-onAuthStateChanged(auth,async user=>{
- if(!user){showLogin();hideHelp();msg("");return;}
- try{
-  const access=await getRole(user);
-  if(!access){
-   showLogin();
-   msg("Google sign-in succeeded, but this account has no active staff/admin permission.");
-   displayHelp(user,"Your Google account is recognized. Check that this exact UID has an active owner or team record in Firestore.");
-   return;
+function activateTab(panelId, changeHistory = false) {
+  if (!authorizedPanel(panelId)) return;
+  for (const tab of document.querySelectorAll("[data-panel]")) {
+    const selected = tab.dataset.panel === panelId;
+    tab.classList.toggle("active", selected);
+    tab.setAttribute("aria-selected", String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+    const panel = $("#" + tab.dataset.panel);
+    if (panel) panel.hidden = !selected;
   }
-  hideHelp();
-  showDashboard(access);
-  await loadAll();
- }catch(error){
-  console.error("Unable to verify workspace access:",error);
-  showLogin();
-  const reason=error.code==="permission-denied"
-   ? "Firestore blocked the administrator record lookup. The security rules may not be published or may deny this user's UID."
-   : "Cannot verify your access because Firebase returned an error ("+(error.code||"unknown")+"). Check the console configuration.";
-  msg(reason);
-  displayHelp(user,reason);
- }
+  const [title, subtitle] = panelInfo[panelId];
+  $("#workspace-page-title").textContent = title;
+  $("#workspace-page-desc").textContent = subtitle;
+  if (changeHistory) history.replaceState(null, "", "#" + panelId);
+  closeMobileNav();
+  if (window.matchMedia("(max-width: 860px)").matches) {
+    $("#workspace-page-title").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+function showDashboard(user, access) {
+  role = access;
+  $("#login-view").hidden = true;
+  $("#dashboard-view").hidden = false;
+  $("#sign-out").hidden = false;
+  $("#workspace-role").textContent = role === "admin" ? "Administrator" : "Staff member";
+  $("#workspace-email").textContent = user.email || "Google account";
+  const isAdmin = role === "admin";
+  $("#admin-nav-section").hidden = !isAdmin;
+  for (const item of document.querySelectorAll("[data-admin-only]")) item.hidden = !isAdmin;
+  for (const item of document.querySelectorAll("[data-panel]")) {
+    item.hidden = !authorizedPanel(item.dataset.panel);
+  }
+  const requested = decodeURIComponent(location.hash.replace(/^#/, ""));
+  activateTab(authorizedPanel(requested) ? requested : "overview-panel");
+}
+async function getRole(user) {
+  const result = await getIdTokenResult(user);
+  if (result.claims?.firebase?.sign_in_provider !== "google.com") return null;
+  // Original owner authorization and staff roles are distinct; the customer
+  // profile has no bearing on either.
+  const owner = await getDoc(doc(db, "admins", user.uid));
+  if (owner.exists() && owner.data().active === true) return "admin";
+  const team = await getDoc(doc(db, "team", user.uid));
+  if (team.exists() && team.data().active === true &&
+      ["admin", "staff"].includes(team.data().role)) return team.data().role;
+  return null;
+}
+async function loadAll() {
+  if (!role || loading) return;
+  loading = true;
+  const button = $("#refresh-dashboard");
+  button.disabled = true;
+  button.textContent = "Refreshing…";
+  msg("Refreshing workspace data…", true);
+  try {
+    const tasks = [
+      ["Menu", refreshMenu()],
+      ["Orders", refreshOrders()],
+      ["Bulk bookings", refreshBulk()],
+      ["Menu suggestions", refreshSuggestions()]
+    ];
+    if (role === "admin") {
+      tasks.push(["Ordering controls", refreshSettings()]);
+      tasks.push(["Customer directory", refreshPeople()]);
+      tasks.push(["Customer reports", refreshReports()]);
+    }
+    const settled = await Promise.allSettled(tasks.map(([, task]) => task));
+    const errors = settled.flatMap((outcome, index) => {
+      if (outcome.status === "fulfilled") return [];
+      console.error(tasks[index][0] + " failed:", outcome.reason);
+      return [tasks[index][0]];
+    });
+    // Preparation/insights depend on orders, but not on unrelated collections.
+    if (settled[1].status === "fulfilled") {
+      try { refreshPrep(); } catch (error) { console.error(error); errors.push("Kitchen prep"); }
+      if (role === "admin") {
+        try { await refreshInsights(); } catch (error) { console.error(error); errors.push("Insights"); }
+      }
+    }
+    try { await refreshOverview(); } catch (error) { errors.push("Overview status"); }
+    if (errors.length) {
+      msg("Could not load: " + errors.join(", ") + ". Other sections may still be available. Check Firestore permissions and try Refresh.");
+    } else {
+      msg("Workspace updated.", true);
+    }
+  } finally {
+    loading = false;
+    button.disabled = false;
+    button.textContent = "↻ Refresh";
+  }
+}
+async function authorize(user) {
+  if (verifying) return;
+  verifying = true;
+  const attempt = ++authAttempt;
+  const loginButton = $("#google-login");
+  loginButton.disabled = true;
+  setLoginState("Verifying your team access…");
+  try {
+    const access = await getRole(user);
+    if (attempt !== authAttempt || auth.currentUser?.uid !== user.uid) return;
+    if (!access) {
+      showLogin();
+      const reason = "This Google account is recognized but has no active admin or staff role. Customer registration does not interfere with access.";
+      showHelp(user, reason);
+      msg(reason);
+      setLoginState("Role approval needed. See Access troubleshooting.", true);
+      return;
+    }
+    hideHelp();
+    showDashboard(user, access);
+    setLoginState("Signed in.", false);
+    msg("");
+    await loadAll();
+  } catch (error) {
+    console.error("Em's Taste authorization check failed:", error);
+    showLogin();
+    const reason = error.code === "permission-denied"
+      ? "Firestore denied the role lookup. The published rules may not allow reading your own admins or team record."
+      : "Cannot check your role (" + (error.code || "connection error") + "). Confirm Firebase is reachable.";
+    showHelp(user, reason);
+    msg(reason);
+    setLoginState(reason, true);
+  } finally {
+    verifying = false;
+    loginButton.disabled = false;
+  }
+}
+onAuthStateChanged(auth, async user => {
+  if (!user) {
+    authAttempt += 1;
+    showLogin();
+    hideHelp();
+    msg("");
+    setLoginState("No separate Em’s Taste password required.");
+    return;
+  }
+  await authorize(user);
 });
-$("#google-login").addEventListener("click",async()=>{
- const button=$("#google-login");button.disabled=true;
- try{
-  const provider=new GoogleAuthProvider();
-  provider.setCustomParameters({prompt:"select_account"});
-  await signInWithPopup(auth,provider);
- }catch(error){
-  console.error(error);
-  msg(error.code==="auth/popup-blocked"?"Allow Google sign-in popups in your browser.":"Could not sign in. Check Google Authentication and authorized domains.");
- }finally{button.disabled=false;}
+$("#google-login").addEventListener("click", async () => {
+  const button = $("#google-login");
+  if (button.disabled) return;
+  button.disabled = true;
+  try {
+    if (auth.currentUser && !role) await signOut(auth);
+    setLoginState("Opening Google’s sign-in window…");
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+    await signInWithPopup(auth, provider);
+    setLoginState("Signed in to Google. Checking workspace permissions…");
+  } catch (error) {
+    console.error("Google sign-in failed:", error);
+    const explanations = {
+      "auth/popup-blocked": "The browser blocked the Google window. Allow popups or open this page in Chrome.",
+      "auth/popup-closed-by-user": "Google sign-in was cancelled.",
+      "auth/unauthorized-domain": "Add this website domain to Firebase Authentication → Authorized domains.",
+      "auth/operation-not-allowed": "Enable the Google provider under Firebase Authentication.",
+      "auth/network-request-failed": "The network connection failed. Please try again."
+    };
+    setLoginState(explanations[error.code] || "Google sign-in could not complete. Try again.", true);
+  } finally {
+    button.disabled = false;
+  }
 });
-$("#sign-out").addEventListener("click",()=>signOut(auth));
-$("#refresh-dashboard").addEventListener("click",loadAll);
-document.querySelectorAll("[data-panel]").forEach(tab=>tab.addEventListener("click",()=>activateTab(tab.dataset.panel)));
-initMenu();initOrders();initBulk();initPrep();initSettings();initPeople();initReports();
-$("#year").textContent=new Date().getFullYear();
+$("#retry-access").addEventListener("click", async () => {
+  if (!auth.currentUser) {
+    setLoginState("Sign in with Google first.", true);
+    return;
+  }
+  await authorize(auth.currentUser);
+});
+$("#sign-out").addEventListener("click", async () => {
+  $("#sign-out").disabled = true;
+  try { await signOut(auth); }
+  catch (error) { console.error(error); msg("Could not sign out. Please try again."); }
+  finally { $("#sign-out").disabled = false; }
+});
+$("#refresh-dashboard").addEventListener("click", loadAll);
+$("#workspace-mobile-nav").addEventListener("click", () => {
+  const area = $(".workspace-nav-area");
+  const open = area.classList.toggle("mobile-open");
+  $("#workspace-mobile-nav").setAttribute("aria-expanded", String(open));
+});
+document.querySelectorAll("[data-panel]").forEach(tab => {
+  tab.addEventListener("click", () => activateTab(tab.dataset.panel, true));
+  tab.addEventListener("keydown", event => {
+    if (!["ArrowDown", "ArrowUp"].includes(event.key)) return;
+    event.preventDefault();
+    const choices = [...document.querySelectorAll("[data-panel]")].filter(item => !item.hidden);
+    const index = choices.indexOf(tab);
+    const next = choices[(index + (event.key === "ArrowDown" ? 1 : -1) + choices.length) % choices.length];
+    next.focus();
+  });
+});
+document.addEventListener("click", event => {
+  const button = event.target.closest("[data-go]");
+  if (!button || !role) return;
+  activateTab(button.dataset.go, true);
+});
+window.addEventListener("hashchange", () => {
+  const panelId = decodeURIComponent(location.hash.replace(/^#/, ""));
+  if (authorizedPanel(panelId)) activateTab(panelId);
+});
+
+initMenu(); initOrders(); initBulk(); initPrep(); initSettings(); initPeople(); initReports();
+$("#year").textContent = String(new Date().getFullYear());
