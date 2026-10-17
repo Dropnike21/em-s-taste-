@@ -1,6 +1,6 @@
 import { auth, db } from "./firebase-config.js";
-import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, getIdTokenResult } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc, serverTimestamp, Timestamp, query, orderBy, limit, getCountFromServer } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, getIdTokenResult } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc, serverTimestamp, Timestamp, query, orderBy, limit, getCountFromServer } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
 
 const $ = s => document.querySelector(s);
 const money = v => new Intl.NumberFormat("en-PH", {style:"currency", currency:"PHP"}).format(Number(v)||0);
