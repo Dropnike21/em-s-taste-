@@ -53,6 +53,11 @@ service cloud.firestore {
       let t = manilaNow();
       return string(t.year()) + '-' + string(t.month()) + '-' + string(t.day());
     }
+    function utcDateKey(t) {
+      return string(t.year()) + '-' +
+        (t.month() < 10 ? '0' : '') + string(t.month()) + '-' +
+        (t.day() < 10 ? '0' : '') + string(t.day());
+    }
     function validOrderingWindow() {
       let t = manilaNow();
       return (t.dayOfWeek() == 7 || t.dayOfWeek() <= 4) && t.hours() < 23;
@@ -220,7 +225,7 @@ service cloud.firestore {
         request.resource.data.requestedDate.hours() == 0 &&
         request.resource.data.requestedDate.minutes() == 0 &&
         request.resource.data.serviceDay is string &&
-        request.resource.data.serviceDay.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$') &&
+        request.resource.data.serviceDay == utcDateKey(request.resource.data.requestedDate) &&
         bulkId == request.auth.uid + '_' + request.resource.data.serviceDay &&
         request.resource.data.status == 'pending_confirmation' &&
         request.resource.data.createdAt == request.time;
