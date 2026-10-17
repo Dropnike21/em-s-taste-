@@ -8,6 +8,7 @@ let dayIndex=0;
 let daysSelected=Array.from({length:5},()=>new Set());
 let isPublished=false;
 let isLoading=false;
+let isDirty=false;
 let requestVersion=0;
 
 function toDate(key){return new Date(key+"T00:00:00.000Z");}
@@ -90,18 +91,29 @@ export function initWeeklyMenu(){
   if(box.checked)daysSelected[dayIndex].add(box.dataset.weekProduct);
   else daysSelected[dayIndex].delete(box.dataset.weekProduct);
   renderProducts();
-  setStatus("");
+  isDirty=true;
+  setStatus("Unsaved changes.");
  });
  $("#weekly-search").addEventListener("input",renderProducts);
+ const checkUnsaved=()=>{
+  if(!isDirty)return true;
+  return confirm("Discard your unsaved weekly menu edits and change weeks?");
+ };
  $("#weekly-prev").addEventListener("click",()=>{
-  $("#weekly-monday").value=plusDays($("#weekly-monday").value,-7);
+  if(!checkUnsaved())return;
+  $("#weekly-monday").value=plusDays(weekKey||currentMonday(),-7);
+  isDirty=false;
   refreshWeeklyMenu().catch(error=>console.error(error));
  });
  $("#weekly-next").addEventListener("click",()=>{
-  $("#weekly-monday").value=plusDays($("#weekly-monday").value,7);
+  if(!checkUnsaved())return;
+  $("#weekly-monday").value=plusDays(weekKey||currentMonday(),7);
+  isDirty=false;
   refreshWeeklyMenu().catch(error=>console.error(error));
  });
  $("#weekly-monday").addEventListener("change",()=>{
+  if(!checkUnsaved()){$("#weekly-monday").value=weekKey;return;}
+  isDirty=false;
   refreshWeeklyMenu().catch(error=>console.error(error));
  });
  $("#weekly-copy-day").addEventListener("click",()=>{
@@ -113,17 +125,20 @@ export function initWeeklyMenu(){
    daysSelected[dayIndex]=new Set(daysSelected[0]);
   }
   renderProducts();
-  setStatus("");
+  isDirty=true;
+  setStatus("Unsaved changes.");
  });
  $("#weekly-published").addEventListener("change",event=>{
   isPublished=event.target.checked;
-  setStatus("");
+  isDirty=true;
+  setStatus("Unsaved changes.");
  });
  $("#weekly-save").addEventListener("click",saveWeeklyMenu);
 }
 
 // Loads the chosen week only; products are reused by ID, never duplicated.
 export async function refreshWeeklyMenu(){
+ if(isDirty){setStatus("Unsaved weekly changes. Save the plan before refreshing.");return;}
  const input=$("#weekly-monday");
  const normalized=mondayOf(input.value||currentMonday());
  if(!normalized){setStatus("Choose a valid date.",true);return;}
@@ -136,6 +151,7 @@ export async function refreshWeeklyMenu(){
   const snapshots=await Promise.all(Array.from({length:5},(_,i)=>getDoc(doc(db,"menuDays",plusDays(normalized,i)))));
   if(current!==requestVersion)return;
   weekKey=normalized;
+  isDirty=false;
   daysSelected=snapshots.map(snapshot=>new Set(
    Array.isArray(snapshot.data()?.itemIds)?snapshot.data().itemIds.filter(id=>typeof id==="string"):[]
   ));
@@ -181,6 +197,7 @@ async function saveWeeklyMenu(){
    });
   }
   await batch.commit();
+  isDirty=false;
   setStatus(isPublished?"Weekly menu published. Customers see dishes scheduled for their workday.":
    "Weekly plan saved as a draft. Customers cannot see it until published.");
   msg("Weekly menu saved.",true);
