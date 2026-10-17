@@ -161,20 +161,30 @@
         </div>
       </section>
       <section id="menu-panel" class="admin-panel" role="tabpanel">
-        <div class="panel-title"><div><h2>Product catalog</h2><p>Set up your meals once. Reuse them when planning each week's menu.</p></div>
-          <button type="button" id="seed-catalog" class="button button-outline">Add 30 Filipino starter products</button>
+        <div class="panel-title"><div><h2>My dishes</h2><p>Set your prices once. Choose meals for the week when you are ready.</p></div>
+          <button type="button" id="seed-catalog" class="button button-primary">Set up 30 Filipino dishes</button>
         </div>
-        <p id="catalog-seed-status" class="muted" role="status" aria-live="polite">Starter products are saved as drafts without prices; existing meals are never replaced.</p>
-        <div class="admin-split">
-          <form id="dish-form" class="admin-card">
-            <h3 id="dish-form-title">Add a menu item</h3>
-            <p class="muted">Edit a saved dish or choose a Filipino recipe to add separately. Set the price once, then select it from your weekly plan.</p>
-            <label for="dish-template">Choose a popular Filipino dish</label>
+        <p id="catalog-seed-status" class="muted" role="status" aria-live="polite"></p>
+        <div class="catalog-guide"><strong>Step 1: Set a price</strong><span>Tap “Set price” on a dish. It will be ready to add to your weekly menu.</span>
+          <button type="button" class="button button-primary" data-go="weekly-panel">Next: Choose meals →</button></div>
+        <div class="catalog-layout">
+          <div class="admin-card catalog-products-card">
+            <div class="saved-menu-heading"><h3>My dishes</h3><label for="dish-list-filter">Show
+              <select id="dish-list-filter"><option value="active">All current dishes</option><option value="archived">Archived dishes</option><option value="all">Every dish</option></select>
+            </label></div>
+            <div id="admin-dishes" class="catalog-card-grid"><p class="muted">Loading dishes…</p></div>
+          </div>
+          <details id="catalog-extra" class="catalog-extra admin-card">
+            <summary>More options · Add or edit a dish</summary>
+            <form id="dish-form">
+            <h3 id="dish-form-title">Dish details</h3>
+            <p class="muted">Optional: change the name, description or picture, or create another dish.</p>
+            <label for="dish-template">Choose an existing Filipino dish</label>
             <select id="dish-template" aria-describedby="dish-template-help">
               <option value="">Select a dish to start…</option>
             </select>
-            <p id="dish-template-help" class="form-hint">Templates do not publish food automatically. Select a dish, set its price, then save.</p>
-            <button id="custom-dish" type="button" class="button button-outline menu-custom-button">+ Create a custom dish</button>
+            
+            <button id="custom-dish" type="button" class="button button-outline menu-custom-button">+ Add a new dish</button>
             <div id="dish-editor" class="dish-editor" hidden>
             <input type="hidden" id="dish-id">
             <label for="dish-name">Dish name *</label><input id="dish-name" maxlength="100" required placeholder="e.g. Pork Adobo">
@@ -184,23 +194,33 @@
               <div><label for="dish-category">Category</label><select id="dish-category"><option value="ulam">Ulam</option><option value="sides">Rice & extras</option></select></div>
             </div>
             <label for="dish-tag">Menu tag</label><input id="dish-tag" maxlength="35" placeholder="e.g. Mama’s favorite">
-            <label for="dish-image">Photo URL (optional)</label><input id="dish-image" type="url" maxlength="500" placeholder="https://.../food-photo.jpg">
-            <label class="check-line"><input type="checkbox" id="dish-available"> Product active (eligible for weekly menus)</label>
-            <p class="muted">Daily menu availability is set separately in the Weekly menu tab.</p>
+            <label for="dish-image">Dish picture</label>
+            <div class="catalog-photo-actions">
+              <button id="find-food-photo" type="button" class="button button-outline">Choose a free photo</button>
+              <button id="clear-food-photo" type="button" class="button button-outline">No photo</button>
+            </div>
+            <div id="photo-chooser" class="photo-chooser" hidden></div>
+            <label for="dish-image" class="form-hint">Or paste your photo address</label>
+            <input id="dish-image" type="url" maxlength="700" placeholder="https://...">
+            <input id="dish-image-credit" type="hidden">
+            <input id="dish-image-license" type="hidden">
+            <input id="dish-image-license-url" type="hidden">
+            <input id="dish-image-source" type="hidden">
+            <div id="dish-photo-preview" class="dish-photo-preview" hidden></div>
+            <label class="check-line"><input type="checkbox" id="dish-available"> Ready to offer in the weekly menu</label>
             <div class="form-actions"><button class="button button-primary" id="save-dish" type="submit">Save dish</button><button class="button button-outline" id="cancel-edit" type="button">Cancel</button></div>
             </div>
-          </form>
-          <div class="admin-card"><div class="saved-menu-heading"><h3>Products</h3><label for="dish-list-filter">Show
-            <select id="dish-list-filter"><option value="active">Active products</option><option value="archived">Archived meals</option><option value="all">All meals</option></select>
-          </label></div><div id="admin-dishes" class="admin-dishes"><p class="muted">Loading menu…</p></div>
-            <h3 class="subsection-title">Customer menu suggestions</h3>
-            <div id="staff-menu-suggestions"><p class="muted">Loading suggestions…</p></div>
-          </div>
+            </form>
+            <details class="catalog-feedback">
+              <summary>Meal requests from customers</summary>
+              <div id="staff-menu-suggestions"><p class="muted">Loading suggestions…</p></div>
+            </details>
+          </details>
         </div>
       </section>
       <section id="weekly-panel" class="admin-panel" role="tabpanel" hidden>
-        <div class="panel-title"><div><h2>Weekly menu planner</h2>
-          <p>Reuse products from your catalog and choose what's offered each workday.</p></div></div>
+        <div class="panel-title"><div><h2>Choose meals for the week</h2>
+          <p>Tap dishes to add or remove them for each workday. Your saved prices stay the same.</p></div></div>
         <div class="admin-card weekly-planner">
           <div class="weekly-toolbar">
             <div class="weekly-date-select">
@@ -220,17 +240,20 @@
             <button type="button" data-week-day="4" class="weekly-day" role="tab" aria-selected="false">Fri <small>—</small></button>
           </div>
           <div class="weekly-day-heading"><div><h3 id="weekly-day-heading">Monday's menu</h3>
-            <p id="weekly-selected-count" class="muted">Choose available catalog products.</p></div>
+            <p id="weekly-selected-count" class="muted">Tap a dish to add it.</p></div>
             <button id="weekly-copy-day" type="button" class="button button-outline">Copy Monday to weekdays</button></div>
-          <label for="weekly-search">Search products</label>
+          <label for="weekly-search">Find a dish</label>
           <input id="weekly-search" type="search" placeholder="Search dishes in your catalog…" autocomplete="off">
           <div id="weekly-products" class="weekly-products" role="group" aria-label="Products for the selected day">
             <p class="muted">Loading products…</p>
           </div>
           <div class="weekly-footer">
-            <label class="check-line"><input type="checkbox" id="weekly-published"> Publish these daily menus to customers</label>
-            <p class="muted">Save without publishing to keep a draft. Only active products with a price can be selected. The admin controls when customers may place orders.</p>
-            <button type="button" id="weekly-save" class="button button-primary">Save weekly menu</button>
+            <div class="weekly-footer-actions">
+              <button type="button" id="weekly-save" class="button button-primary">Publish this week's menu</button>
+              <button type="button" id="weekly-save-draft" class="button button-outline">Save for later</button>
+            </div>
+            <input id="weekly-published" type="checkbox" hidden>
+            <p class="muted">Publishing shows these meals to customers. Only administrators can open ordering.</p>
             <p id="weekly-status" role="status" aria-live="polite" class="muted"></p>
           </div>
         </div>
