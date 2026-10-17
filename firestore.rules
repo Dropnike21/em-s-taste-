@@ -1,0 +1,125 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function adminPath() {
+      return /databases/$(database)/documents/admins/$(request.auth.uid);
+    }
+    function isAdmin() {
+      return request.auth != null &&
+        exists(adminPath()) &&
+        get(adminPath()).data.active == true;
+    }
+    function storefrontPath() {
+      return /databases/$(database)/documents/settings/storefront;
+    }
+    // Rules timestamps are UTC; +8 hours gives the correct Manila local clock.
+    // Firebase dayOfWeek(): Monday=1, ..., Sunday=7.
+    function manilaNow() {
+      return request.time + duration.value(8, 'h');
+    }
+    function nextWorkdayDate() {
+      return (manilaNow() + duration.value(1, 'd')).date();
+    }
+    function validOrderingWindow() {
+      let t = manilaNow();
+      return (t.dayOfWeek() == 7 || t.dayOfWeek() <= 4) &&
+        t.hours() < 23;
+    }
+    function orderingEnabled() {
+      return validOrderingWindow() &&
+        exists(storefrontPath()) &&
+        get(storefrontPath()).data.ordersOpen == true &&
+        get(storefrontPath()).data.menuDate == nextWorkdayDate();
+    }
+    function menuPath(id) {
+      return /databases/$(database)/documents/menu/$(id);
+    }
+    function validItem(item) {
+      return item is map &&
+        item.keys().hasAll(['id', 'name', 'quantity', 'unitPrice']) &&
+        item.keys().hasOnly(['id', 'name', 'quantity', 'unitPrice']) &&
+        item.id is string &&
+        item.id.size() > 0 &&
+        item.id.size() <= 60 &&
+        item.id.matches('^[a-z0-9-]+$') &&
+        item.name is string &&
+        item.name.size() > 0 &&
+        item.name.size() <= 100 &&
+        item.quantity is int &&
+        item.quantity >= 1 &&
+        item.quantity <= 20 &&
+        item.unitPrice is int &&
+        item.unitPrice >= 1 &&
+        item.unitPrice <= 5000 &&
+        exists(menuPath(item.id)) &&
+        get(menuPath(item.id)).data.available == true &&
+        get(menuPath(item.id)).data.name == item.name &&
+        get(menuPath(item.id)).data.price == item.unitPrice;
+    }
+    function lineTotal(item) {
+      return item.quantity * item.unitPrice;
+    }
+    // At most 6 order lines so every line is validated independently.
+    // Each order creation uses <= 7 distinct dependent Firestore reads.
+    function validLines(lines) {
+      return lines is list && lines.size() >= 1 && lines.size() <= 6 &&
+        validItem(lines[0]) &&
+        (lines.size() < 2 || validItem(lines[1])) &&
+        (lines.size() < 3 || validItem(lines[2])) &&
+        (lines.size() < 4 || validItem(lines[3])) &&
+        (lines.size() < 5 || validItem(lines[4])) &&
+        (lines.size() < 6 || validItem(lines[5]));
+    }
+    function verifiedTotal(lines) {
+      return lineTotal(lines[0]) +
+        (lines.size() > 1 ? lineTotal(lines[1]) : 0) +
+        (lines.size() > 2 ? lineTotal(lines[2]) : 0) +
+        (lines.size() > 3 ? lineTotal(lines[3]) : 0) +
+        (lines.size() > 4 ? lineTotal(lines[4]) : 0) +
+        (lines.size() > 5 ? lineTotal(lines[5]) : 0);
+    }
+    function validOrder(order) {
+      return order.keys().hasAll(['customerName', 'workplace', 'note', 'items', 'total', 'serviceDate', 'createdAt', 'status']) &&
+        order.keys().hasOnly(['customerName', 'workplace', 'note', 'items', 'total', 'serviceDate', 'createdAt', 'status']) &&
+        order.customerName is string &&
+        order.customerName.size() >= 2 && order.customerName.size() <= 80 &&
+        order.workplace is string &&
+        order.workplace.size() >= 2 && order.workplace.size() <= 100 &&
+        order.note is string && order.note.size() <= 240 &&
+        order.status == 'pending' &&
+        order.createdAt == request.time &&
+        order.serviceDate is timestamp &&
+        order.serviceDate == nextWorkdayDate() &&
+        order.total is int &&
+        order.total > 0 && order.total <= 600000 &&
+        validLines(order.items) &&
+        order.total == verifiedTotal(order.items);
+    }
+
+    match /admins/{uid} {
+      // Create the first admin authorization document using Firebase Console
+      // or a trusted Admin SDK, NEVER from a public website.
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow list, create, update, delete: if false;
+    }
+    match /settings/{settingId} {
+      allow get: if settingId == 'storefront' || isAdmin();
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+    match /menu/{itemId} {
+      allow read: if true; // Public menu contains no private customer data.
+      allow create, update, delete: if isAdmin();
+    }
+    match /orders/{orderId} {
+      // Anyone can REQUEST an order without a customer account during the
+      // Manila window. The admin must confirm it manually after review.
+      // Enable App Check and server-side abuse controls before real launch.
+      allow create: if orderingEnabled() && validOrder(request.resource.data);
+      allow get, list, update, delete: if isAdmin();
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
