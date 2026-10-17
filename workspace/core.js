@@ -56,6 +56,8 @@ function showLogin() {
   role = null;
   $("#login-view").hidden = false;
   $("#dashboard-view").hidden = true;
+  $("#staff-top-nav").hidden = true;
+  $("#staff-nav-toggle").hidden = true;
   $("#sign-out").hidden = true;
   window.EMS_UI?.setAccount({
     signedIn: false,
@@ -114,6 +116,8 @@ function showDashboard(user, access) {
   role = access;
   $("#login-view").hidden = true;
   $("#dashboard-view").hidden = false;
+  $("#staff-top-nav").hidden = false;
+  $("#staff-nav-toggle").hidden = false;
   $("#sign-out").hidden = true; // Sign-out is in the shared account menu.
   window.EMS_UI?.setAccount({
     signedIn: true,
@@ -262,7 +266,8 @@ $("#google-login").addEventListener("click", async () => {
   if (button.disabled) return;
   button.disabled = true;
   try {
-    if (auth.currentUser && !role) await signOut(auth);
+    // Keep the popup within the original click's user-activation window.
+    // Google's account chooser can switch users without signing out first.
     setLoginState("Opening Google’s sign-in window…");
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
