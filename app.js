@@ -315,15 +315,25 @@
       : live?.accountError
         ? "Account sign-in could not finish: " + live.accountError
         : "Sign in securely with Google. It only takes a moment.";
-    $("#account-shortcut").textContent = signedIn ? "My account" : "Sign in";
-    $("#account-shortcut").setAttribute("aria-label",
-      signedIn ? "View your account and past orders" : "Sign in with Google");
-    if (intro) {
-      // The normal cart is not useful before the visitor chooses a path.
-      $("#open-cart").hidden = true;
-    } else {
-      $("#open-cart").hidden = false;
-    }
+    $("#open-cart").hidden = false;
+    const role = live?.workspaceRole || "customer";
+    window.EMS_UI?.setAccount({
+      signedIn,
+      name: live?.customer?.displayName || "Guest",
+      email: live?.customer?.email || "",
+      role,
+      canManage: role === "staff" || role === "admin",
+      onOrders: () => {
+        $("#orders-details").open = true;
+        $("#account-section").scrollIntoView({ behavior: "smooth", block: "start" });
+      },
+      onSignIn: () => {
+        openSignInGateway();
+        customerSignIn();
+      },
+      onSignOut: () => window.EMS_SIGNOUT()
+    });
+    if (ready) window.EMS_UI?.hideLoading();
   }
 
   function renderCustomer() {
@@ -344,10 +354,9 @@
     }
     lastCustomerUid = currentUid;
     $("#customer-google-login").hidden = signedIn;
-    $("#customer-signout").hidden = !signedIn;
+    $("#customer-signout").hidden = true; // Sign out from the shared account dropdown.
     $("#customer-refresh").hidden = !signedIn;
     $("#customer-history").hidden = !signedIn;
-    $("#account-shortcut").textContent = signedIn ? "My account" : "Sign in";
     $("#customer-heading").textContent = signedIn ? "Welcome back, " + customer.displayName + "." : "Your orders, all in one place.";
     $("#customer-status").textContent = live?.accountError ||
       (customer?.blocked ? "Ordering is disabled for this account. Contact Em's Taste for assistance."
@@ -430,15 +439,6 @@
     });
     document.addEventListener("keydown", e => {
       if (e.key === "Escape") closeNavigation();
-    });
-    $("#account-shortcut").addEventListener("click", () => {
-      if (window.EMS_LIVE_STATE?.customer) {
-        $("#orders-details").open = true;
-        $("#account-section").scrollIntoView({behavior:"smooth", block:"start"});
-      } else {
-        openSignInGateway();
-      }
-      closeNavigation();
     });
     $("#welcome-google-login").addEventListener("click", customerSignIn);
     $("#welcome-browse").addEventListener("click", () => {
