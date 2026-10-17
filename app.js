@@ -1,9 +1,9 @@
 (() => {
   "use strict";
   const settings = window.EMS_CONFIG || {};
-  const dishes = Array.isArray(window.EMS_MENU) ? window.EMS_MENU : [];
+  let dishes = Array.isArray(window.EMS_MENU) ? window.EMS_MENU : [];
   const STORAGE_KEY = "ems-taste-cart-v1";
-  const maxPerDish = 99;
+  const maxPerDish = 20;
   const $ = (selector) => document.querySelector(selector);
   const money = (value) => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(value);
   const html = (value) => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
@@ -70,17 +70,29 @@
     return { open, today, orderWindow, serviceDate, weekday };
   }
 
+  function acceptingOrders() {
+    const live = window.EMS_LIVE_STATE;
+    if (!live?.ready || live.error || !live.usingLiveMenu || !live.settings?.ordersOpen || !schedule.open) return false;
+    const published = live.settings.menuDate?.toDate?.();
+    return published instanceof Date && published.toISOString().slice(0, 10) === schedule.serviceDate.toISOString().slice(0, 10);
+  }
+
   function updateSchedule() {
     schedule = getSchedule();
     $("#menu-date").textContent = prettyDate(schedule.serviceDate);
     $("#cart-delivery").textContent = "Meals for " + prettyDate(schedule.serviceDate);
+    const live = window.EMS_LIVE_STATE;
+    const published = Boolean(live?.ready && live.usingLiveMenu && !live.error);
+    const open = acceptingOrders();
     const status = $("#schedule-status");
-    status.classList.toggle("closed", !schedule.open);
-    status.textContent = schedule.open ? "● Pre-orders open" : "○ Orders closed";
-    $("#schedule-message").textContent = schedule.open
-      ? "Order for " + prettyDate(schedule.serviceDate) + " by 11:00 PM (Philippine time)."
-      : "Next order window: " + prettyDate(schedule.orderWindow) + " (until 11:00 PM PH time).";
-    $("#sample-warning").textContent = settings.sampleMenu ? "Sample menu — for preview only" : "Available items & prices";
+    status.classList.toggle("closed", !open);
+    status.textContent = open ? "● Online orders open" : "○ Ordering unavailable";
+    $("#schedule-message").textContent = !published
+      ? "Website preview: the live menu and ordering have not been activated."
+      : open
+        ? "Requests for " + prettyDate(schedule.serviceDate) + " close at 11:00 PM Philippine time."
+        : "Order requests are not open. Next order window: " + prettyDate(schedule.orderWindow) + ".";
+    $("#sample-warning").textContent = published ? "Current published menu" : "Sample menu — for preview only";
     updateCheckoutButton();
   }
 
@@ -131,12 +143,11 @@
 
   function updateCheckoutButton() {
     const button = $("#prepare-order");
-    const hasItems = totalItems() > 0;
-    const locked = !schedule.open && !settings.previewMode;
-    button.disabled = !hasItems || locked;
-    button.innerHTML = !schedule.open
-      ? (settings.previewMode ? "Preview order summary <span aria-hidden='true'>→</span>" : "Ordering is closed")
-      : "Prepare order summary <span aria-hidden='true'>→</span>";
+    const open = acceptingOrders();
+    button.disabled = !totalItems() || !open || button.dataset.submitting === "yes";
+    button.innerHTML = open
+      ? "Send order request <span aria-hidden='true'>→</span>"
+      : "Online requests unavailable";
   }
 
   function paintCart() {
@@ -158,6 +169,10 @@
   function changeQuantity(id, change) {
     const item = dishes.find(d => d.id === id);
     if (!item || item.available === false) return;
+    if (change > 0 && !cart[id] && lineItems().length >= 6) {
+      window.alert("You can select up to six different dishes per order.");
+      return;
+    }
     const next = Math.max(0, Math.min(maxPerDish, (cart[id] || 0) + change));
     if (next === 0) delete cart[id]; else cart[id] = next;
     saveCart();
@@ -195,7 +210,7 @@
       "TOTAL: " + money(totalAmount())
     ];
     if (note) lines.push("Note: " + note);
-    lines.push("", "This is not a confirmed order. Please send to your workplace coordinator and await confirmation.");
+    lines.push("", "Order request pending. Please wait for staff confirmation.");
     if (settings.sampleMenu) lines.push("DEMO ONLY: Sample dishes and prices.");
     return lines.join("\n");
   }
