@@ -151,6 +151,7 @@
     const published = week.some(day => day.published);
     const section = $("#weekly-preview-section");
     section.hidden = !published;
+    $("#weekly-preview-link").hidden = !published;
     if (!published) return;
     const all = state.catalog || [];
     const serviceDay = schedule.serviceDate.toISOString().slice(0,10);
