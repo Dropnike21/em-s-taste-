@@ -17,7 +17,6 @@
   <script type="module" src="customer/requests.js"></script>
 </head>
 <body>
-  <div class="top-strip"><span class="tiny-star">✦</span> HOME-COOKED GOODNESS, MADE FOR YOUR WORKDAY <span class="tiny-star">✦</span></div>
   <header class="site-header">
     <div class="shell nav-row">
       <a class="brand" href="#top" aria-label="Em's Taste homepage">
@@ -25,14 +24,11 @@
         <span class="brand-text"><strong>Em’s Taste</strong><small>LUTONG BAHAY</small></span>
       </a>
       <nav class="main-nav" id="site-navigation" aria-label="Main navigation">
-        <a href="#menu">Our Menu</a>
-        <a href="#how-it-works">How ordering works</a>
-        <a href="#account-section">My account & orders</a>
-        <a href="#customer-services">Requests & feedback</a>
-        <a href="#story">Our Story</a>
-        <a href="admin.html" class="staff-portal-link">Staff / Admin portal</a>
+        <a href="#menu" data-guest-nav>Menu</a>
+        <a href="#how-it-works" data-guest-nav>How it works</a>
+        <a href="#customer-services" data-guest-nav>Requests & feedback</a>
       </nav>
-      <button id="account-shortcut" class="account-shortcut" type="button" aria-label="Customer account and orders">Sign in</button>
+      <button id="account-shortcut" class="account-shortcut" type="button" aria-label="Sign in with Google">Sign in</button>
       <button id="open-cart" class="cart-toggle" type="button" aria-controls="cart-drawer" aria-expanded="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 4h2l2 11h11l3-8H6M9 20h.01M17 20h.01" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span class="cart-word">My order</span><span id="cart-count" class="cart-count">0</span>
@@ -44,18 +40,48 @@
   </header>
 
   <main id="top">
+    <section id="welcome-gate" class="welcome-gate" aria-labelledby="welcome-title">
+      <div class="shell welcome-layout">
+        <div class="welcome-copy">
+          <span class="welcome-eyebrow"><span class="welcome-eyebrow-dot" aria-hidden="true"></span> YOUR LITTLE CORNER OF LUTONG BAHAY</span>
+          <h1 id="welcome-title">A taste of home,<br><em>made for your day.</em></h1>
+          <p>Discover homemade Filipino meals from Emma’s kitchen. Sign in to request meals, keep track of orders, and share your favorites.</p>
+          <div class="welcome-auth-actions">
+            <button id="welcome-google-login" class="button button-primary welcome-google" type="button" disabled>
+              <span class="google-circle" aria-hidden="true">G</span>
+              <span>Continue with Google</span>
+              <span aria-hidden="true">↗</span>
+            </button>
+            <button id="welcome-browse" class="welcome-browse" type="button" disabled>Browse the menu first <span aria-hidden="true">→</span></button>
+          </div>
+          <p id="welcome-status" class="welcome-status" role="status" aria-live="polite">Checking your account…</p>
+          <div class="welcome-assurance"><span aria-hidden="true">✓</span> No separate password required <span class="assurance-sep">·</span> No payment needed to browse</div>
+        </div>
+        <div class="welcome-visual" aria-hidden="true">
+          <div class="welcome-visual-halo"></div>
+          <div class="welcome-visual-card">
+            <span class="welcome-kitchen-label">FROM EMMA’S KITCHEN</span>
+            <img src="logo.svg" width="220" height="220" alt="">
+            <strong>Lutong bahay.</strong>
+            <span>Gawang may puso.</span>
+          </div>
+          <span class="welcome-float welcome-float-top">Familiar flavors ♡</span>
+          <span class="welcome-float welcome-float-bottom">Made for your workday</span>
+        </div>
+      </div>
+    </section>
+    <div id="storefront-content" hidden>
     <section class="hero">
       <div class="shell hero-grid">
         <div class="hero-copy">
-          <div class="eyebrow"><span class="eyebrow-line"></span> A LITTLE TASTE OF HOME</div>
-          <h1>Good food.<br><em>Warm hearts.</em><br>Every workday.</h1>
-          <p class="hero-lead">Comforting Filipino meals, thoughtfully prepared in Emma’s home kitchen. Choose your favorites today, enjoy them on your next workday.</p>
+          <div class="eyebrow"><span class="eyebrow-line"></span> FRESH FROM EMMA’S KITCHEN</div>
+          <h1>Homemade meals.<br><em>Feel-good days.</em></h1>
+          <p class="hero-lead">Your favorite Filipino comfort food, thoughtfully cooked and ready for your next workday.</p>
           <div class="hero-actions">
-            <a href="#menu" class="button button-primary">Explore the menu <span aria-hidden="true">↗</span></a>
-            <a href="#how-it-works" class="text-link">How ordering works <span aria-hidden="true">→</span></a>
+            <a href="#menu" class="button button-primary">See today’s menu <span aria-hidden="true">→</span></a>
+            <a href="#how-it-works" class="text-link">How it works <span aria-hidden="true">↗</span></a>
           </div>
-          <div class="hero-divider"></div>
-          <div class="hero-points"><span>✦ Freshly prepared</span><span>✦ Filipino favorites</span><span>✦ Made with care</span></div>
+          <div class="hero-points"><span>✓ Filipino favorites</span><span>✓ Home-cooked with care</span><span>✓ Workplace pre-orders</span></div>
         </div>
         <div class="hero-art" aria-label="Stylized steaming bowl illustration">
           <div class="hero-art-ring"></div>
@@ -141,7 +167,7 @@
         <p class="section-kicker">WE LISTEN TO OUR CUSTOMERS</p>
         <h2>We’d love to <em>hear from you.</em></h2>
         <p class="section-desc">Have a meal suggestion, feedback, or a large workplace booking? Choose one of the options below.</p>
-        <p id="services-auth" class="service-auth"><a href="#account-section">Sign in to your account</a> to send a request or report.</p>
+        <p id="services-auth" class="service-auth"><a href="#welcome-gate" data-show-login>Sign in with Google</a> to send a request or report.</p>
         <div id="customer-service-forms" class="customer-service-grid" hidden>
           <details class="request-disclosure"><summary><strong>Suggest a dish or send feedback</strong><small>Menu requests, ratings, bugs & issues</small></summary>
           <form id="feedback-form" class="admin-card request-form">
@@ -205,6 +231,7 @@
     </section>
 
     <section class="cta-section"><div class="shell cta-row"><div><p class="section-kicker">YOUR NEXT FAVORITE LUNCH</p><h2>Something good is <em>cooking.</em></h2><p>See what’s on the menu and get your order ready.</p></div><a href="#menu" class="button button-light">Browse today’s options <span aria-hidden="true">↗</span></a></div></section>
+    </div>
   </main>
 
   <footer class="footer"><div class="shell footer-main"><div class="footer-brand"><span class="footer-title">Em’s Taste</span><span>Lutong Bahay, Gawang May Puso.</span></div><div class="footer-info"><span>Home-cooked meals • Workplace pre-orders</span><span>Sunday–Thursday orders • 11:00 PM PH cutoff</span></div></div><div class="shell footer-bottom"><span>© <span id="year"></span> Em’s Taste.</span><span>Made with care, just like Mama’s cooking. · <a href="privacy.html">Privacy</a> · <a href="admin.html">Staff sign-in</a></span></div></footer>
