@@ -235,5 +235,6 @@ window.EMS_REVIEW_SUBMIT = async ({ orderId, rating, comment }) => {
   notify();
 };
 
+window.EMS_REFRESH_PUBLIC_MENU = refreshMenu;
 onAuthStateChanged(auth, syncAccount);
 refreshMenu();
