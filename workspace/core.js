@@ -3,7 +3,7 @@ import {
   GoogleAuthProvider, onAuthStateChanged, signInWithPopup,
   signOut, getIdTokenResult
 } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
+import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
 import { initMenu, refreshMenu, refreshSuggestions } from "./menu.js";
 import { initOrders, refreshOrders } from "./orders.js";
 import { initBulk, refreshBulk } from "./bulk.js";
@@ -25,7 +25,7 @@ const panelInfo = {
   "settings-panel": ["Ordering controls", "Configure the next meal workday and preorder availability."],
   "insights-panel": ["Customers & insights", "Review customer activity and completed-meal feedback."],
   "reports-panel": ["Reports & feedback", "Review customer concerns and resolve reported problems."],
-  "team-panel": ["Team permissions", "Authorize staff and manage access to the workspace."]
+  "team-panel": ["Users & roles", "Search registered accounts and assign Customer, Staff, or Administrator access."]
 };
 let role = null;
 let loading = false;
@@ -102,6 +102,25 @@ function showDashboard(user, access) {
   }
   const requested = decodeURIComponent(location.hash.replace(/^#/, ""));
   activateTab(authorizedPanel(requested) ? requested : "overview-panel");
+}
+async function ensureProfile(user) {
+  // A customer record makes new Google sign-ins discoverable in Users & roles,
+  // even when they first visit the staff portal instead of the storefront.
+  // Existing profile fields are never overwritten.
+  try {
+    const ref = doc(db, "customers", user.uid);
+    const existing = await getDoc(ref);
+    if (existing.exists()) return;
+    const name = (user.displayName || user.email?.split("@")[0] || "Customer").trim().slice(0,80);
+    await setDoc(ref, {
+      displayName: name || "Customer",
+      email: user.email || "",
+      createdAt: serverTimestamp(),
+      blocked: false
+    });
+  } catch (error) {
+    console.warn("Unable to register user profile; proceeding with normal role check:", error);
+  }
 }
 async function getRole(user) {
   const result = await getIdTokenResult(user);
@@ -206,6 +225,7 @@ onAuthStateChanged(auth, async user => {
     setLoginState("No separate Em’s Taste password required.");
     return;
   }
+  await ensureProfile(user);
   await authorize(user);
 });
 $("#google-login").addEventListener("click", async () => {
