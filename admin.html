@@ -54,6 +54,7 @@
         <button type="button" role="tab" aria-controls="menu-panel" aria-selected="true" class="active" data-panel="menu-panel">Menu & pricing</button>
         <button type="button" role="tab" aria-controls="orders-panel" aria-selected="false" data-panel="orders-panel">Orders</button>
         <button type="button" role="tab" aria-controls="bulk-panel" aria-selected="false" data-panel="bulk-panel">Bulk orders</button>
+        <button type="button" role="tab" aria-controls="prep-panel" aria-selected="false" data-panel="prep-panel">Kitchen prep</button>
         <button type="button" role="tab" aria-controls="settings-panel" aria-selected="false" data-panel="settings-panel" hidden>Ordering settings</button>
         <button type="button" role="tab" aria-controls="insights-panel" aria-selected="false" data-panel="insights-panel" hidden>Customers & insights</button>
         <button type="button" role="tab" aria-controls="team-panel" aria-selected="false" data-panel="team-panel" hidden>Team permissions</button>
@@ -81,6 +82,12 @@
             <div id="staff-menu-suggestions"><p class="muted">Loading suggestions…</p></div>
           </div>
         </div>
+      </section>
+      <section id="prep-panel" class="admin-panel" role="tabpanel" hidden>
+        <div class="panel-title"><div><h2>Kitchen preparation & packing</h2><p>Aggregate confirmed and completed orders by dish, workplace and meal date. Large bookings require separate planning after staff approval.</p></div>
+          <button type="button" id="export-prep" class="button button-outline">Export prep sheet</button></div>
+        <p class="section-kicker" id="prep-total">Calculating confirmed servings…</p>
+        <div id="prep-summary"><p class="muted">Loading kitchen counts…</p></div>
       </section>
       <section id="bulk-panel" class="admin-panel" role="tabpanel" hidden>
         <div class="panel-title"><div><h2>Large meal bookings</h2><p>Requests for more than 50 servings require manual quotation and staff confirmation. These are not automatically accepted sales.</p></div></div>
