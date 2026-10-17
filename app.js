@@ -454,7 +454,9 @@
     $("#customer-google-login").addEventListener("click", customerSignIn);
     $("#cart-google-login").addEventListener("click", async () => {
       closeCart(false);
-      document.querySelector("#account-section").scrollIntoView({behavior:"smooth", block:"start"});
+      // Guests have no visible account section; authenticate through the
+      // dedicated sign-in screen, then return to their saved cart.
+      openSignInGateway();
       await customerSignIn();
     });
     $("#customer-signout").addEventListener("click", () => window.EMS_SIGNOUT());
