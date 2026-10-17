@@ -72,7 +72,8 @@
 
   function acceptingOrders() {
     const live = window.EMS_LIVE_STATE;
-    if (!live?.ready || live.error || !live.usingLiveMenu || !live.settings?.ordersOpen || !schedule.open) return false;
+    if (!live?.ready || live.error || !live.usingLiveMenu || !live.settings?.ordersOpen || !schedule.open ||
+        !dishes.some(item => item.available === true && item.archived !== true)) return false;
     const published = live.settings.menuDate?.toDate?.();
     return published instanceof Date && published.toISOString().slice(0, 10) === schedule.serviceDate.toISOString().slice(0, 10) && live.settings.menuDayKey === schedule.serviceDate.toISOString().slice(0, 10);
   }
@@ -88,10 +89,14 @@
     status.classList.toggle("closed", !open);
     status.textContent = open ? "● Online orders open" : "○ Ordering unavailable";
     $("#schedule-message").textContent = !published
-      ? "Website preview: the live menu and ordering have not been activated."
+      ? "Menu preview only. Actual meals and ordering will appear once the kitchen opens."
       : open
-        ? "Requests for " + prettyDate(schedule.serviceDate) + " close at 11:00 PM Philippine time."
-        : "Order requests are not open. Next order window: " + prettyDate(schedule.orderWindow) + ".";
+        ? "Meal requests for " + prettyDate(schedule.serviceDate) + " close at 11:00 PM Philippine time."
+        : !live?.settings?.ordersOpen
+          ? "Online ordering is currently closed. Please check back for the next available menu."
+          : !dishes.some(item => item.available === true && item.archived !== true)
+            ? "The kitchen has no available meals at the moment."
+            : "Ordering is closed for now. Next eligible day: " + prettyDate(schedule.orderWindow) + ".";
     $("#sample-warning").textContent = published ? "Current published menu" : "Sample menu — for preview only";
     $("#menu-disclaimer").textContent = published
       ? "* Prices and availability are subject to kitchen confirmation. Menu updates may require a page refresh."
@@ -132,7 +137,9 @@
           <button type="button" class="add-button" data-add="${html(item.id)}" ${unavailable ? "disabled" : ""} aria-label="${previewOnly ? "Example item only" : "Add " + html(item.name) + " to order"}">${previewOnly ? "Preview only" : unavailable ? "Unavailable" : "+ Add to order"}</button></div>
         </div>
       </article>`;
-    }).join("") || '<p class="empty-menu">No items in this category yet.</p>';
+    }).join("") || '<p class="empty-menu">' +
+      (filter === "all" ? "No meals have been published yet. Please check back soon." :
+        "No meals in this category right now.") + '</p>';
   }
 
   function lineItems() {
