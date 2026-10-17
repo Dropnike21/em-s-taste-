@@ -141,7 +141,9 @@
         </div>
       </article>`;
     }).join("") || '<p class="empty-menu">' +
-      (filter === "all" ? "No meals have been published yet. Please check back soon." :
+      (filter === "all" ? (window.EMS_LIVE_STATE?.plannedDay ?
+        "No meals published for the next workday. Check the weekly menu below." :
+        "No meals have been published yet. Please check back soon.") :
         "No meals in this category right now.") + '</p>';
   }
 
