@@ -1,135 +1,135 @@
-# Em's Taste — Website and Ordering System
+# Em's Taste — Role-Based Ordering and Kitchen Workspace
 
-**Lutong Bahay, Gawang May Puso.** Home-cooked Filipino meals prepared by Emma.
+**Lutong Bahay, Gawang May Puso.** A modular Filipino home-cooked food site: static GitHub Pages UI and Firebase Authentication / Firestore data.
 
-## Project status
+## Current implementation
 
-The site is built with HTML/CSS/JavaScript, GitHub Pages, and Firebase JavaScript SDK **13.0.0**. The code is committed to GitHub, but **Firestore rule deployment, first-admin approval, and real-device tests must be completed manually** in the Firebase project before taking orders. Menu sample values are examples, not live products.
+### Customer (public site: index.html)
+- Browse menus without signing in.
+- Google sign-in is required for actual order requests, personal history, suggestions, and feedback.
+- **Normal ordering: 1–50 servings per workday**, one order request per Google account / service date. Status starts **pending**; business staff must confirm.
+- **Bulk booking: 51–500 servings**: use the separate request form, enter intended workday and meal preferences, then **wait for a staff quote and confirmation**. Bulk inquiries do not reserve stock or constitute a paid transaction.
+- Request a dish be added to the menu.
+- Submit private 0–5 star food/site/service feedback, bugs, other issues. One request per feedback category per Philippine calendar day. *General feedback isn't a verified purchased-meal review.*
+- **Verified food ratings** are available on My orders only for completed orders, one review per order.
+- View your order history and personal report/bulk inquiry statuses.
 
-## Roles
+### Staff (team workspace: admin.html)
+- Menu CRUD (add/edit, name, description, price, image link, category, availability).
+- Read meal requests / menu suggestions, but NOT general customer complaints or directory information.
+- View recent normal-order / transaction history, manage fulfillment status, record manual **payment status**, export recent transactions as CSV.
+- Review and quote bulk inquiries, then mark under review, confirmed, declined or completed. Quotes and payment flags are **internal**, not an online payment gateway.
+- Cannot grant roles, access customer directories, manage customer reports, change global ordering settings, or make customers administrators.
 
-- **Visitor:** Browse the menu and prices without signing in.
-- **Customer:** Sign in with Google using Firebase Authentication. A customer profile is created in Firestore on their first visit. No Em's Taste password is needed.
-- **Administrator:** Sign in with Google **and** have a manually approved `admins/{firebaseUid}` record with `active: true`.
+### Administrator (team workspace: admin.html)
+All staff operations **plus**:
+- Admin-only global ordering schedule/availability.
+- Customer directory and account-blocking.
+- Staff/admin role assignments using Firebase UIDs.
+- Private ratings and operational insights.
+- Administrator-only reports, bug triage, service issues, and resolution statuses.
 
-### Firebase Console setup: approve first administrator
+## Architecture and modules
 
-1. Open https://console.firebase.google.com/project/ems-taste/authentication/providers and **enable Google** if it is not already enabled.
-2. Go to **Authentication → Settings → Authorized domains** and include `dropnike21.github.io` (and any custom site domain).
-3. Find the admin's exact **Firebase UID** under **Authentication → Users**. The UID shown to the admin on the "access not approved" screen is also valid.
-4. Under **Firestore Database → Data**, create the collection `admins`. Add a document **whose ID is exactly that admin UID** with a Boolean `active` field set to `true`.
-5. In **Firestore Database → Rules**, publish the full contents of [firestore.rules](firestore.rules). **Committing rules to GitHub does not deploy them.** Do not replace the rules with globally open read/write permissions.
-6. Sign out and sign back into `admin.html` using Google. You should now see the admin dashboard. The UID must not be hardcoded into the website or placed in a publicly writable record.
-7. In admin **Ordering settings**, set the intended service date and enable orders only after real dishes and prices have been loaded and tested. The dashboard also writes a `menuDayKey` string matching the service date.
+\`\`\`text
+index.html                  Public menu, cart and customer experience
+app.js                      Storefront cart and normal order workflow
+storefront-firebase.js      Firebase customer identity, order and verified review data
+customer/requests.js        Separate forms for bulk bookings and customer suggestions/reports
+admin.html                  Role-aware staff and admin workspace navigation
+admin.js                    Tiny workspace entry point
+workspace/core.js           Google authentication, role resolution, visible tabs
+workspace/shared.js         Common UI helpers
+workspace/menu.js           Food catalog / price / availability / menu suggestions
+workspace/orders.js         Regular transaction status, manual payment status, CSV export
+workspace/bulk.js           Bulk inquiries, manual quote and approval
+workspace/settings.js       Admin-only global ordering hours / service date settings
+workspace/insights.js       Admin-only recent dishes and verified rating insights
+workspace/people.js         Admin-only customers, blocked users and staff permissions
+workspace/reports.js        Admin-only bug reports and feedback triage
+firebase-config.js          Public Firebase web configuration
+firestore.rules             Server-side access control (MUST DEPLOY SEPARATELY)
+privacy.html                Draft privacy notice; needs final contact/retention policy
+\`\`\`
 
-## Customer account and order data
+## Role permissions
 
-```text
-admins/{adminUid}
-  active: boolean
+Access is enforced by **Firestore Security Rules**, not solely by hidden navigation.
 
-customers/{googleUid}
-  displayName: string
-  email: string
-  blocked: boolean
-  createdAt: timestamp
+| Capability | Customer | Staff | Admin |
+|---|---|---|---|
+| Browse menu | Yes | Yes | Yes |
+| Order / submit feedback as customer | Yes (Google) | As customer account | As customer account |
+| Manage menu, prices, availability | No | Yes | Yes |
+| View normal and bulk order queues | Own only | All | All |
+| Change fulfillment status / record payments | No | Yes | Yes |
+| Read menu suggestions | Own | Yes | Yes |
+| Review general service / bug reports | Own | No | Yes |
+| Customer directory / customer blocking | No | No | Yes |
+| Assign roles | No | No | Yes |
+| Global ordering control | No | No | Yes |
 
-settings/storefront
-  menuDate: timestamp    // midnight UTC, representing the target workday
-  menuDayKey: string     // "YYYY-MM-DD"
-  ordersOpen: boolean
-  updatedAt: timestamp
+### Secure role provisioning
 
-menu/{dishId}
-  name, price (whole PHP amount), available, category,
-  description, tag, palette, image?
+The original owner administrator setup **continues working**: in Firestore collection **\`admins\`**, document ID **your Google Firebase Authentication UID**, add **\`active: true\`** (Boolean). **Never** put this UID in source code or permit public writes to \`admins\`.
 
-orders/{googleUid_YYYY-MM-DD}
-  customerUid: string
-  customerName: string
-  workplace: string
-  note: string
-  items: array of {id, name, quantity, unitPrice}
-  total: integer
-  serviceDay: "YYYY-MM-DD"
-  serviceDate: timestamp
-  createdAt: timestamp
-  status: "pending" | "confirmed" | "completed" | "cancelled"
-  reviewedAt?: timestamp
+To authorize other team members:
+1. The intended staff member signs into \`admin.html\` using Google.
+2. On first sign-in, the page displays their UID and says access is not approved.
+3. The approved owner signs in and opens **Team permissions**.
+4. Enter the new member's **Firebase UID**, select staff/admin, set Active, save.
+5. The member refreshes and signs in again. Firestore rules check their active role under \`team/{uid}\`.
+6. A staff user **cannot change their own or anyone else's role**.
 
-reviews/{orderId}
-  orderId: string
-  customerUid: string
-  rating: integer 1–5
-  comment: string (max 500 characters)
-  createdAt: timestamp
-```
+\`admins/{uid}\` records are intentionally owner-managed only through a trusted Firebase Console/Admin SDK. Administrators can manage staff/admin roles in \`team/{uid}\`.
 
-A customer **cannot read another customer's private orders or reviews**. Only administrators can list all profiles or orders.
+## Firestore collections and formats
 
-### What prevents casual prank orders?
+- \`admins/{uid}\`: legacy/bootstrap owner allowlist (\`active:true\`).
+- \`team/{uid}\`: \`role:'staff'|'admin'\`, \`active:boolean\`, optional \`label\`, \`updatedAt\`.
+- \`customers/{uid}\`: Google account profile and \`blocked\` flag.
+- \`menu/{dishId}\`: food inventory listing, image URL, name, price, category, availability.
+- \`settings/storefront\`: \`menuDate\`, \`menuDayKey\`, \`ordersOpen\`.
+- \`orders/{uid_YYYY-MM-DD}\`: usual 1–50 serving order requests, \`status\`, optional \`paymentStatus\` and \`reviewedAt\`.
+- \`bulkRequests/{uid_YYYY-MM-DD}\`: requested 51–500 servings, preferences, day, quote, \`status\`, \`paymentStatus\`, \`updatedAt\`.
+- \`feedback/{uid_type_YYYY-M-D}\`: report/idea/rating, own author, category, optional rating, message, report status.
+- \`reviews/{orderId}\`: one verified completed-order rating (1–5) and optional comment.
 
-- Google account sign-in and a verified email are required.
-- A Firestore customer profile must exist and not be blocked.
-- Only **one order request per Google UID per workday** is permitted. Its deterministic Firestore document ID prevents duplicate submissions or overwrites by that user.
-- Each order is limited to **6 different dishes, 5 of each dish, 10 total servings, and ₱3,000**. Menus and prices are verified against Firestore in rules.
-- The **11:00 PM Philippine-time Sunday–Thursday** ordering deadline is enforced in Firestore security rules using server time.
-- Admins can mark abusive customer accounts as blocked (preventing future order requests and reviews).
-- Requests are marked **pending** until a person confirms them. No payment or automatic delivery is implied.
+**A payment flag is a manual staff record, NOT proof of online payment.** A bulk request's quote is NOT a finalized invoice.
 
-**Important:** Google authentication and client-side limits cannot stop a determined attacker from using several different Google accounts or consuming Firestore requests. Before a public launch, deploy **Firebase App Check**, add backend request throttling, monitor billing and abuse, and consider an order confirmation/deposit mechanism for unusually large requests. Do not assume this prototype is fraud-proof.
+## How to publish changes
 
-### Customer feedback
+1. Go to https://console.firebase.google.com/project/ems-taste/authentication/providers and enable **Google** sign-in. Verify your hosted domain (e.g., \`dropnike21.github.io\`) under Authentication → Settings → Authorized domains.
+2. Make sure Firestore Database exists, and the owner is approved in \`admins/{uid}\`.
+3. **Replace the entire Firestore Rules editor with [firestore.rules](firestore.rules) and Publish**. Editing this file in GitHub alone **does NOT** publish the database rules. Never set \`allow read, write: if true\`.
+4. GitHub Pages → Settings → Pages → deploy from \`main\` and \`/(root)\`.
+5. Load \`admin.html\` as the owner, test menu and date settings. Staff UIDs are managed from the admin-only Team permissions tab.
+6. Test each role's access and denial, on desktop and mobile, *before* allowing real customer orders.
 
-After staff sets an order to **completed**, the customer can create **one 1–5 star rating and optional comment** tied to that actual order. Reviews are private to the customer and admins, not public testimonials. Admins can view recent feedback and ratings.
+## Pre-launch security and operations
 
-### Business metrics
+**The code has been updated and statically inspected, but end-to-end Firebase authentication, rules compilation, and database writes have not been confirmed here. Do not launch publicly until tested.**
 
-The admin dashboard reports total registered customer profiles, pending requests from the 100 most recent orders, recent order amounts (not paid sales), popular dishes from recent non-cancelled requests, and averages from the 100 most recent reviews. These are **initial operational insights**, not a full analytics/BI system. Later, add date-based reports, sales vs. payments, repeat purchases, retention, and company breakdowns.
+- [ ] **Rules compile and publish** in Firebase; test each allow/deny case with the Firebase Emulator / Rules Playground.
+- [ ] Test that staff cannot list customers, change ordering settings, or read private bug reports.
+- [ ] Test that an unauthenticated user cannot submit any order or report.
+- [ ] Test Google customer sign-in and that customers can only see their own orders and reports.
+- [ ] Test one normal order and one bulk request per Google UID/service date, including duplicate rejection.
+- [ ] Test normal quantity **50** passes and **51** must use bulk; test **51** and **500** bulk boundaries.
+- [ ] Test Sunday–Thursday 11 PM Philippine-time regular order cutoff.
+- [ ] Test food feedback and verified rating only after order marked Completed.
+- [ ] Test blocked customers cannot submit orders, reviews or new requests.
+- [ ] Test payment statuses and that staff confirms quotes offline.
+- [ ] Configure **Firebase App Check**, backend anti-spam/rate limiting, quota and billing alerts before going live.
+- [ ] Review personal-data retention, contact details, appropriate consent and privacy notice; avoid sensitive information in notes.
+- [ ] Implement payment reconciliation and an audit trail before calling this a production POS.
+- [ ] Test all forms using separate Google accounts for customer, staff and admin.
 
-## Order timetable (Philippine time)
+## Planning / future versions
 
-| Order request | Intended meal date |
-| --- | --- |
-| Sunday before 11 PM | Monday |
-| Monday before 11 PM | Tuesday |
-| Tuesday before 11 PM | Wednesday |
-| Wednesday before 11 PM | Thursday |
-| Thursday before 11 PM | Friday |
-
-No ordering window on Friday or Saturday. The menu date must be set to the correct workday in admin settings. Workplace coordination is the current distribution method; a commercial delivery feature is **not enabled**.
-
-## Data protection and launch checklist
-
-- [ ] Publish and test **firestore.rules** against the current Firebase project.
-- [ ] Approve the owner/admin in `admins/{uid}` in Firestore Console.
-- [ ] Enter real food/menu details, prices, and workday.
-- [ ] Verify Google sign-in on mobile and desktop.
-- [ ] Test that customer A cannot read customer B's profile, orders, or reviews.
-- [ ] Test that an unsigned customer cannot submit an order.
-- [ ] Test that a second order for the same day is rejected.
-- [ ] Test that the same customer can order on a different workday.
-- [ ] Test that cancelled/not-completed orders cannot be rated.
-- [ ] Test that blocked customers cannot create orders or reviews.
-- [ ] Test server-side cutoff behavior before and after 11 PM Philippine time.
-- [ ] Enable Firebase App Check and appropriate abuse controls.
-- [ ] Finalize [privacy notice](privacy.html), retention period, customer support contact, and relevant legal obligations **before public launch**.
-- [ ] Monitor Firebase project quota and billing.
-
-## Files
-
-- `index.html`, `styles.css` — responsive customer website
-- `logo.svg` — simplified steaming bowl icon
-- `menu.js` — preview-only sample dishes
-- `app.js` — cart, schedule, account dashboard and feedback UI
-- `firebase-config.js` — public web-app config, not a secret service account key
-- `storefront-firebase.js` — Google sign-in, profile creation, order requests/history, reviews
-- `admin.html`, `admin.css`, `admin.js` — admin dashboard and recent operational insights
-- `firestore.rules`, `firebase.json` — security rules and Firebase CLI configuration
-- `privacy.html` — pre-launch data-use notice
-
-## Publishing
-
-GitHub repository → **Settings → Pages → Deploy from branch → main → /(root)**.
-
-Firestore rules require a **separate publish** in Firebase Console or the Firebase CLI. Real authentication and write flows have **not** been verified against the live Firebase project from this GitHub connection. Deploy and run the launch checklist before accepting customer orders.
+- Date-based menu management beyond one service day.
+- Cooking prep totals grouped by dish and workplace and packing sheets.
+- Payment reconciliation, receipts, customer notifications and audit logs.
+- Inventory/stock constraints and partial-confirmation handling.
+- More granular operational statistics beyond the 100–150 latest records.
+- Moderation and customer reply workflow for issue reports.
