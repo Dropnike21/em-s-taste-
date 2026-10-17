@@ -8,6 +8,18 @@ function manilaKey(){
  const p=Object.fromEntries(new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Manila",year:"numeric",month:"numeric",day:"numeric"}).formatToParts(new Date()).map(x=>[x.type,x.value]));
  return p.year+"-"+Number(p.month)+"-"+Number(p.day);
 }
+function bulkDateBounds(){
+ const parts=Object.fromEntries(new Intl.DateTimeFormat("en-US",{
+  timeZone:"Asia/Manila",year:"numeric",month:"numeric",day:"numeric"
+ }).formatToParts(new Date()).map(part=>[part.type,part.value]));
+ const utc=new Date(Date.UTC(Number(parts.year),Number(parts.month)-1,Number(parts.day)));
+ const add=days=>new Date(utc.getTime()+days*86400000).toISOString().slice(0,10);
+ return {min:add(1),max:add(90)};
+}
+function updateBulkDates(){
+ const {min,max}=bulkDateBounds(),input=$("#bulk-date");
+ input.min=min;input.max=max;
+}
 function showStatus(id,text,success=false){
  const el=$(id);el.textContent=text;el.classList.toggle("good",success);
 }
@@ -20,9 +32,9 @@ function updateVisibility(){
  $("#customer-service-forms").hidden=!current;
  $("#customer-request-history").hidden=!current;
  $("#services-auth").hidden=!!current;
- $("#services-auth").textContent=window.EMS_LIVE_STATE?.customer?.blocked
-  ?"This account cannot submit requests. Contact Em's Taste for assistance."
-  :"Please sign in with Google above to send requests and feedback.";
+ $("#services-auth").innerHTML=window.EMS_LIVE_STATE?.customer?.blocked
+  ?"Requests are disabled for this account. Contact Em's Taste for assistance."
+  :'<a href="#account-section">Sign in with Google</a> to send requests or feedback.';
  if(current && loadedUid!==current.uid && !loading){
   loadHistory();
  }
@@ -87,8 +99,11 @@ $("#bulk-form").addEventListener("submit",async event=>{
  const workplace=$("#bulk-workplace").value.trim();
  const mealRequest=$("#bulk-meals").value.trim();
  const note=$("#bulk-note").value.trim();
- if(!Number.isFinite(date.getTime())||date.toISOString().slice(0,10)!==key||[0,6].includes(date.getUTCDay())||
-   date<=new Date()||servings<51||servings>500||!Number.isInteger(servings)||workplace.length<2||mealRequest.length<3){
+ updateBulkDates();
+ if(!Number.isFinite(date.getTime())||date.toISOString().slice(0,10)!==key||
+   key<$("#bulk-date").min||key>$("#bulk-date").max||[0,6].includes(date.getUTCDay())||
+   date<=new Date()||servings<51||servings>500||!Number.isInteger(servings)||
+   workplace.length<2||workplace.length>100||mealRequest.length<3||mealRequest.length>400){
   showStatus("#bulk-status","Select a future workday, 51–500 servings, and provide workplace and meal details.");return;
  }
  const button=event.currentTarget.querySelector('button[type="submit"]');
@@ -110,5 +125,7 @@ $("#bulk-form").addEventListener("submit",async event=>{
    "Unable to save the booking request. Please try again.");
  }finally{button.disabled=false;}
 });
+$("#bulk-date").addEventListener("focus",updateBulkDates);
+updateBulkDates();
 window.addEventListener("ems-data",updateVisibility);
 updateVisibility();
