@@ -67,12 +67,18 @@ function renderProducts(){
  $("#weekly-products").innerHTML=all.map(d=>{
   const eligible=eligibleIds.has(d.id);
   const checked=selected.has(d.id);
-  return '<label class="weekly-product'+(!eligible?" weekly-product-disabled":"")+'">'+
-    '<input type="checkbox" data-week-product="'+esc(d.id)+'"'+(checked?" checked":"")+
-    (!eligible&&!checked?" disabled":"")+'><span><strong>'+esc(d.name)+'</strong><small>'+
-    (eligible?peso(d.price):checked?"No longer active — uncheck to remove":"Set a price and activate in Products")+
-    '</small></span></label>';
- }).join("") || '<p class="muted">No products match. Set up your catalog in Menu & products first.</p>';
+  const url=typeof d.image==="string"&&/^https:\/\//.test(d.image)?d.image:"";
+  const photo=url?'<img loading="lazy" src="'+esc(url)+'" alt="" referrerpolicy="no-referrer">':
+   '<span class="weekly-dish-placeholder" aria-hidden="true">🍲</span>';
+  return '<button type="button" data-week-product="'+esc(d.id)+'" '+
+   (!eligible&&!checked?'disabled ':'')+
+   'aria-pressed="'+checked+'" class="weekly-dish-button'+(checked?" is-added":"")+
+   (!eligible?" is-disabled":"")+'">'+
+   photo+'<span class="weekly-dish-text"><strong>'+esc(d.name)+'</strong><small>'+
+   (eligible?peso(d.price):checked?"Not ready — tap to remove":"Set price first")+
+   '</small></span><span class="weekly-dish-action">'+
+   (checked?"✓ Added":"＋ Add")+'</span></button>';
+ }).join("") || '<p class="muted">No dishes found. Set a price under My dishes first.</p>';
  $("#weekly-copy-day").disabled=false;
  $("#weekly-copy-day").textContent=dayIndex===0 ?
    "Copy Monday to Tue–Fri" : "Use Monday's choices";
@@ -85,14 +91,15 @@ export function initWeeklyMenu(){
   dayIndex=Number(tab.dataset.weekDay);
   renderProducts();
  });
- $("#weekly-products").addEventListener("change",event=>{
-  const box=event.target.closest("[data-week-product]");
-  if(!box)return;
-  if(box.checked)daysSelected[dayIndex].add(box.dataset.weekProduct);
-  else daysSelected[dayIndex].delete(box.dataset.weekProduct);
-  renderProducts();
+ $("#weekly-products").addEventListener("click",event=>{
+  const tile=event.target.closest("[data-week-product]");
+  if(!tile||tile.disabled)return;
+  const id=tile.dataset.weekProduct;
+  if(daysSelected[dayIndex].has(id))daysSelected[dayIndex].delete(id);
+  else daysSelected[dayIndex].add(id);
   isDirty=true;
-  setStatus("Unsaved changes.");
+  renderProducts();
+  setStatus("Not saved yet.");
  });
  $("#weekly-search").addEventListener("input",renderProducts);
  const checkUnsaved=()=>{
@@ -128,12 +135,8 @@ export function initWeeklyMenu(){
   isDirty=true;
   setStatus("Unsaved changes.");
  });
- $("#weekly-published").addEventListener("change",event=>{
-  isPublished=event.target.checked;
-  isDirty=true;
-  setStatus("Unsaved changes.");
- });
- $("#weekly-save").addEventListener("click",saveWeeklyMenu);
+ $("#weekly-save").addEventListener("click",()=>saveWeeklyMenu(true));
+ $("#weekly-save-draft").addEventListener("click",()=>saveWeeklyMenu(false));
 }
 
 // Loads the chosen week only; products are reused by ID, never duplicated.
@@ -169,7 +172,7 @@ export async function refreshWeeklyMenu(){
   if(current===requestVersion){isLoading=false;save.disabled=false;}
  }
 }
-async function saveWeeklyMenu(){
+async function saveWeeklyMenu(publish){
  if(isLoading||!weekKey)return;
  const eligible=new Set(eligibleProducts().map(d=>d.id));
  for(let i=0;i<5;i++){
@@ -182,28 +185,37 @@ async function saveWeeklyMenu(){
    }
   }
  }
- if(isPublished && daysSelected.every(set=>set.size===0)){
+ if(publish && daysSelected.every(set=>set.size===0)){
   setStatus("Select at least one product before publishing an empty week.",true);return;
  }
- if(isPublished && !confirm("Publish "+weekKey+"'s weekly menu to the customer website? Online ordering still requires administrator approval."))return;
- const button=$("#weekly-save");
- button.disabled=true;button.textContent="Saving…";
+ if(publish && !confirm("Show this weekly menu to customers? Ordering remains controlled by the administrator."))return;
+ if(!publish && isPublished && !confirm("Hide this week's menu from customers and save it for later?"))return;
+ const button=publish?$("#weekly-save"):$("#weekly-save-draft");
+ $("#weekly-save").disabled=true;
+ $("#weekly-save-draft").disabled=true;
+ button.textContent="Saving…";
  try{
   const batch=writeBatch(db);
   for(let i=0;i<5;i++){
    batch.set(doc(db,"menuDays",dayKey(i)),{
     weekStart:weekKey,itemIds:[...daysSelected[i]],
-    published:isPublished,updatedAt:serverTimestamp()
+    published:publish,updatedAt:serverTimestamp()
    });
   }
   await batch.commit();
   isDirty=false;
-  setStatus(isPublished?"Weekly menu published. Customers see dishes scheduled for their workday.":
-   "Weekly plan saved as a draft. Customers cannot see it until published.");
+  isPublished=publish;
+  $("#weekly-published").checked=publish;
+  setStatus(publish?"Your weekly menu is now visible to customers.":"Saved for later. Customers cannot see this menu yet.");
   msg("Weekly menu saved.",true);
   window.dispatchEvent(new Event("ems-workspace-menu-updated"));
  }catch(error){
   console.error("Could not save weekly menu:",error);
   setStatus("Could not save this plan. Verify the new Firestore rules are published.",true);
- }finally{button.disabled=false;button.textContent="Save weekly menu";}
+ }finally{
+  $("#weekly-save").disabled=false;
+  $("#weekly-save-draft").disabled=false;
+  $("#weekly-save").textContent="Publish this week's menu";
+  $("#weekly-save-draft").textContent="Save for later";
+ }
 }
