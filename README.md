@@ -1,80 +1,107 @@
-# Em's Taste
+# Em's Taste — Ordering Website
 
-**Lutong Bahay, Gawang May Puso.** A warm, responsive storefront for Emma's home-cooked Filipino meals.
+**Lutong Bahay, Gawang May Puso.** A responsive Filipino home-cooked food storefront for Emma and her family.
 
-## What version 1 does
+> **Deployment status:** Website source is committed, but Firebase Console provisioning and Firestore rules deployment must be completed before live orders can work. Until then, the storefront is a sample preview.
 
-- Modern mobile-friendly home page inspired by the Em's Taste branding
-- Editable sample menu with prices and categories
-- Cart with adjustable quantities and peso totals
-- Pre-order schedule based on **Asia/Manila** time
-- **11:00 PM cutoff on Sunday–Thursday** for the following workday (Monday–Friday)
-- Customer name, workplace / pickup group, and optional order note
-- Share or copy a detailed order request through the customer's own messaging app
-- Cart draft stored on the customer's **own browser only**
+## Architecture
 
-**Important:** This is a **preview**, not a live online order-processing system. No orders, names, payments, or messages are saved to a business database or sent to Emma automatically. The order summary must be shared with a coordinator, who must acknowledge/confirm it. Menu items and prices are **examples** and must be replaced before real customers use the site.
+- Static GitHub Pages site: HTML, CSS, JavaScript
+- **Firebase Authentication:** email/password sign-in for *administrators only*. Customers never register or log in.
+- **Cloud Firestore:** stores current menu, workday/cutoff configuration, customer order requests and privately authorized admin IDs
+- No independent delivery service yet; orders are organized by workplace/pickup group
 
-## Files
+## Getting started in Firebase Console
 
-| File | Purpose |
-| --- | --- |
-| `index.html` | Main page and ordering interface |
-| `styles.css` | Colors, layout, animations, mobile responsiveness |
-| `logo.svg` | Simplified bowl logo icon inspired by the Em's Taste sample logo |
-| `menu.js` | Menu items, prices, availability, schedule settings |
-| `app.js` | Menu rendering, cart, cutoff display, order summary and sharing |
+Use project **ems-taste** at https://console.firebase.google.com/.
 
-## How to preview locally
+1. **Build → Firestore Database:** Create a Cloud Firestore database (if not created yet). Choose a region carefully because its location cannot be changed later. Keep production rules restrictive; do **not** publish `allow read, write: if true`.
+2. **Build → Authentication → Sign-in method:** Enable **Email/Password**. Do not enable public self-signup. Go to **Users → Add user** and create the first admin's email and password.
+3. **Authentication → Settings → Authorized domains:** Add your actual GitHub Pages domain, likely `dropnike21.github.io`, if it is not already in the list. For a custom domain, add that too.
+4. Copy the Firebase Authentication user’s exact **UID** from **Authentication → Users**.
+5. In **Firestore → Data**, manually create collection `admins`, document ID exactly matching that UID, and add field `active` of **boolean** type `true`. This is the allowlist that gives that person admin access. **Never let the public website create/update admin permission documents.**
+6. Publish the repository’s **`firestore.rules`** in **Firestore Database → Rules**. Optionally use the CLI with `firebase deploy --only firestore:rules --project ems-taste` from the repository after authenticating Firebase CLI. These rules are **not** deployed automatically merely by pushing them to GitHub.
+7. Publish your repository as GitHub Pages: **Settings → Pages → Deploy from branch → main → /(root)**.
+8. Open **`admin.html`** on your GitHub Pages domain and sign in with the admin email/password. The page verifies your UID’s `admins/{uid}` Firestore record.
+9. In the admin dashboard, create your **real** menu dishes and prices, set the **Monday–Friday service date** in **Ordering settings**, and enable **Allow online order requests** only after you have reviewed the safeguards below.
+10. Refresh the public storefront to load the menu. Only Sunday–Thursday before **11:00 PM Philippine time** can customers submit requests for the following workday.
 
-Open `index.html` in a modern browser. For more reliable Clipboard and Share API behavior, serve it over `localhost` or HTTPS.
+## What the website can do
 
-For example, if Python is installed:
+### Public storefront
+- Show published Firestore menu with prices (sample menu displayed until real dishes are published)
+- Cart and automatic peso totals
+- Customer name, workplace group, and optional note — no customer account
+- Send requests to Firestore when the admin allows ordering and the time window is valid
+- Show a Firestore-generated reference ID after the request is **saved**
+- Copy/share the reference to a workplace coordinator
+- Staff **must confirm** every request; receiving a request is not a guarantee of availability or payment
 
-```sh
-python -m http.server 8000
+### Admin console
+- Login via **Firebase Authentication Email/Password**; no public sign-up page
+- Verify authorization with Firestore document `admins/{uid}` containing `active: true`
+- Reset password by email on the login screen (Firebase Authentication)
+- Create and edit dishes, prices, photos, and availability
+- Select menu workday and close/open requests
+- View up to 100 most recent order requests and update their status
+- Export those recent orders to CSV (contains personal information; keep it private)
+
+### Database collections
+```text
+admins/{adminAuthUid}
+  active: true
+
+settings/storefront
+  menuDate: Timestamp at 00:00 UTC of the intended workday
+  ordersOpen: boolean
+  updatedAt: serverTimestamp
+
+menu/{slug-id}
+  name, description, category, tag, price, available, palette, image? (optional)
+
+orders/{automaticDocumentId}
+  customerName, workplace, note, items, total,
+  serviceDate, createdAt, status ("pending" initially)
+  reviewedAt? (after staff status update)
 ```
 
-Then visit `http://localhost:8000`.
+## Ordering schedule (Philippine time)
 
-## Publish on GitHub Pages
+| Request submitted | Meal date |
+| --- | --- |
+| Sunday, before 11 PM | Monday |
+| Monday, before 11 PM | Tuesday |
+| Tuesday, before 11 PM | Wednesday |
+| Wednesday, before 11 PM | Thursday |
+| Thursday, before 11 PM | Friday |
 
-1. Open the repository **Settings → Pages**.
-2. Under **Build and deployment**, choose **Deploy from a branch**.
-3. Select **main**, folder **/(root)**, and click **Save**.
-4. When GitHub has finished publishing, visit the URL shown under Pages.
+Friday, Saturday, and days after the 11 PM cutoff are closed. **The admin must select the matching service date** each day (e.g., Monday requests for Tuesday must use Tuesday's menu date). Public order rules validate the cutoff against Firebase's server time adjusted to Manila (+08:00), not the customer's device clock.
 
-Publishing makes the preview visible to others. **Do not present the preview as an automated order submission service.**
+## Critical security / operations notes
 
-## Update the menu
+- **Do not launch publicly without publishing and testing the included restrictive `firestore.rules`**. Its rules restrict menu/settings changes and order reads to authorized staff, validate submitted line items against Firestore prices, and enforce the Manila order window server-side.
+- Public unauthenticated order creation still has **spam and cost-abuse risks**. Before real customers order, add Firebase **App Check** and stronger server-side throttling/abuse prevention (prefer a Cloud Function or protected backend), verify Firestore quotas/billing alerts, and test rules using the Firestore emulator/rules playground.
+- Currently no inventory reservation, payment verification, receipt, automatic customer notification, or cancellation workflow. Customer order requests need staff confirmation; duplicate requests and last-minute stock changes remain possible.
+- Admin credentials belong in **Firebase Authentication**, **not Firestore documents**. Never save passwords, service-account JSON keys, or private keys in GitHub. Web-app Firebase configuration fields are public identifiers, not authorization.
+- Customer names, workplace details, and notes are personal data. Publish an appropriate privacy notice, limit what is collected, and define secure retention/deletion procedures before public launch.
+- Changing a price after a customer loads the page can cause their submission to be rejected; the customer should refresh and try again.
+- Image URLs entered by admins are rendered as images. Use trusted hosted photos and confirm permission to use them.
 
-Edit `menu.js`: change each item's `name`, `description`, `price`, `category`, `available`, and `tag`. Use category `ulam` or `sides`. Keep each `id` unique. You may optionally add an `image` path such as `images/adobo.jpg` after uploading a real food photo.
+## Source files
 
-When all actual dishes and prices have replaced the examples, set `sampleMenu: false`.
+- `index.html`, `styles.css`, `logo.svg`: storefront and visual identity
+- `menu.js`: clearly labeled demo data for first launch preview (never submitted)
+- `app.js`: front-end shopping cart, Philippine schedule display, order UI
+- `firebase-config.js`: public Firebase app initialization
+- `storefront-firebase.js`: load published menu/settings and submit order requests
+- `admin.html`, `admin.css`, `admin.js`: protected administrator screen
+- `firestore.rules`, `firebase.json`: proposed Firestore access control and deployment config
 
-The initial `previewMode: true` lets the family test the summary even outside the normal order window; a summary outside the cutoff is marked as a **preview**. Changing `previewMode: false` disables preparing new summaries outside the order window in the browser, **but browser-only cutoff enforcement is not secure** and must not be relied on for actual order acceptance.
+## Plans for later versions
 
-## Current assumptions
-
-- Customers choose meals Sunday–Thursday for pickup/distribution at participating workplaces on the next workday.
-- Sunday orders are for Monday; Monday orders for Tuesday; ...; Thursday orders for Friday.
-- Ordering closes at 11 PM PH time on each ordering day.
-- Friday and Saturday have no ordering window.
-- Holiday exceptions, order capacity, or temporary closures are not yet supported.
-- Dedicated delivery is **not** advertised as available.
-
-## What to build before a real launch
-
-- A private order database and a secure backend to receive orders
-- **Server-side** cutoff validation in the Asia/Manila timezone (clients can change their local clocks)
-- An admin page to set the next day's menu, prices, stock caps, and available workplaces
-- An order confirmation workflow and packing/cooking totals grouped by company
-- Basic privacy notice and appropriate handling of customer information
-- Testing of all flows on phones, including closed ordering days
-- Optional delivery integration, only when the business is ready
-
-Until a backend is connected, staff should confirm orders manually through an agreed messaging channel.
-
-## Branding
-
-The palette uses cream, terracotta, and warm brown. The `logo.svg` is an intentionally simplified vector **icon**, not an exact copy of the previously generated sample logo. It can be replaced by a finalized, production-ready brand asset later.
+- Strong anti-spam backend, App Check, and automated security-rule tests
+- Manage multiple workdays and holiday exceptions
+- Cooking quantity summaries grouped by dish and workplace
+- Stock limits and order capacity
+- Payment tracking
+- Delivery integration when the business is ready
