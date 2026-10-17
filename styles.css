@@ -13,3 +13,33 @@
 @media (max-width:760px){.shell{width:min(100% - 36px,580px)}.nav-row{min-height:72px;gap:15px}.brand img{width:44px;height:44px}.brand-text strong{font-size:22px}.main-nav{display:none}.cart-toggle{padding:8px 10px}.cart-word{display:none}.hero-grid{grid-template-columns:1fr;padding-block:63px 35px;gap:15px}.hero h1{letter-spacing:-1.6px}.hero-lead{font-size:14px}.hero-art{height:330px}.hero-art-ring{width:288px;height:288px;box-shadow:0 0 0 19px #f3e6d6,0 0 0 20px #e2ceba80}.hero-art-inner{height:284px;width:279px}.hero-bowl{width:235px;margin-top:0}.art-overline{font-size:9px}.art-script{font-size:20px}.art-floating{font-size:8px;padding:8px 10px}.art-floating-top{right:8px;top:36px}.art-floating-bottom{bottom:44px;left:2px}.notice-row{padding-block:17px;min-height:0;gap:11px}.notice-icon{font-size:36px}.notice-main strong{font-size:12px}.notice-main span{font-size:11px}.status-pill{font-size:9px;padding:7px 10px}.section-pad{padding:70px 0}.section-top{align-items:flex-start;flex-direction:column;gap:13px}.menu-date-box{width:100%;min-width:0}.menu-toolbar{margin-top:27px}.filters{gap:17px}.filter{font-size:12px}.menu-count{display:none}.menu-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.food-visual{height:147px}.food-visual-icon{width:95px;height:95px}.food-content{padding:13px}.food-content h3{font-size:18px}.food-description{font-size:11px;min-height:55px}.food-bottom{align-items:flex-start;flex-direction:column;gap:6px;margin-top:11px}.price{font-size:19px}.add-button{width:100%}.steps{grid-template-columns:1fr}.steps-section h2{margin-bottom:28px}.step{padding:24px}.step-icon{margin-bottom:14px}.story-section{padding:70px 0}.story-grid{grid-template-columns:1fr;gap:35px}.story-mark{min-height:280px}.story-script{font-size:31px}.story-copy p:not(.section-kicker){font-size:13px}.cta-row{flex-direction:column;align-items:flex-start}.footer-main{flex-direction:column;align-items:flex-start}.footer-info{text-align:left}.footer-bottom{flex-direction:column;gap:3px}.review-actions{flex-direction:column}}
 @media (max-width:390px){.top-strip{letter-spacing:1px;font-size:8px}.shell{width:calc(100% - 28px)}.hero-actions{gap:15px}.hero-points{gap:12px}.hero-art-ring{max-width:83%}.food-visual{height:123px}.food-card h3{font-size:16px}.food-tag{font-size:8px;top:9px;left:9px;padding:4px 7px}.notice-icon{display:none}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}\n.checkout-error{color:#a93e2c;font-size:12px;line-height:1.5;margin-top:10px;min-height:2px}.footer-bottom a{text-decoration:underline;text-underline-offset:3px}.footer-bottom a:hover{color:#fff}\n
+/* Signed-in customer experience */
+.account-shortcut{border:1px solid var(--terracotta);background:#fffaf4;border-radius:50px;color:var(--terracotta-dark);font:700 12px var(--body);padding:9px 16px;white-space:nowrap}
+.account-shortcut:hover{background:#f4e6d7}
+.customer-section{background:#f9f2e8;border-bottom:1px solid var(--line);padding:28px 0}
+.customer-shell{display:grid;gap:12px}
+.customer-account-row{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.customer-account-row h2{font:600 25px var(--heading);margin:2px 0}
+.customer-account-row .section-kicker{margin:0}
+.customer-account-row p:not(.section-kicker){font-size:12px;color:var(--muted);margin:0}
+.customer-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.customer-actions .button{min-height:43px;padding:11px 17px;white-space:nowrap;font-size:12px}
+.customer-privacy{font-size:11px;color:#8b7969;margin:0}
+.customer-privacy a{text-decoration:underline;text-underline-offset:2px}
+#customer-history{margin-top:13px;padding-top:17px;border-top:1px solid var(--line)}
+#customer-history h3{font:600 24px var(--heading);margin-bottom:15px}
+.my-orders{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:13px}
+.my-order-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:18px;min-width:0}
+.my-order-card h4{font:600 18px var(--heading);margin:0 0 4px}
+.my-order-card small{font-size:11px;color:#816f60}
+.my-order-card p{font-size:12px;color:#6c5c50;margin:9px 0}
+.my-order-card .order-status{font-weight:700;text-transform:capitalize;color:var(--terracotta-dark)}
+.my-order-card .order-status.completed{color:#476938}
+.my-review-form{border-top:1px solid var(--line);margin-top:14px;padding-top:12px}
+.my-review-form label{display:block;font-size:12px;font-weight:700;margin-bottom:7px}
+.my-review-form select,.my-review-form textarea{font:13px var(--body);padding:9px;border:1px solid #decbb8;background:#fff;border-radius:6px;width:100%;margin-bottom:8px}
+.my-review-form .button{min-height:40px;font-size:12px}
+.my-review-notice{font-size:12px;color:#4b683c}
+.cart-auth-notice{margin:0 0 13px;padding:10px;border-radius:7px;background:#f4e4d4;color:#8d452c;font-size:12px}
+@media(max-width:900px){.customer-account-row{align-items:flex-start;flex-direction:column}}
+@media(max-width:760px){.nav-row{gap:9px}.account-shortcut{padding:8px;font-size:11px}.brand-text strong{font-size:19px}.cart-toggle{min-width:47px;gap:4px}.my-orders{grid-template-columns:1fr}}
