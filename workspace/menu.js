@@ -70,7 +70,7 @@ function choose(id){
   $("#dish-template").value=id;
   msg(preset.name+" is already saved. You are editing the existing meal.",true);
  }else{
-  reset();fill({...preset,price:"",available:false});
+  reset();fill({...preset,id:"",presetId:preset.id,price:"",available:false});
   $("#dish-template").value=id;
  }
  $("#dish-price").focus();
