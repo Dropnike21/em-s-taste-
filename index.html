@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="styles.css">
   <script src="menu.js" defer></script>
   <script src="app.js" defer></script>
+  <script type="module" src="storefront-firebase.js"></script>
 </head>
 <body>
   <div class="top-strip"><span class="tiny-star">✦</span> HOME-COOKED GOODNESS, MADE FOR YOUR WORKDAY <span class="tiny-star">✦</span></div>
@@ -130,14 +131,14 @@
         <textarea id="order-note" name="note" rows="2" maxlength="240" placeholder="Special request? Let us know."></textarea>
       </form>
     </div>
-    <div class="drawer-footer"><div class="total-line"><span>Order total</span><strong id="cart-total">₱0.00</strong></div><p class="cart-meta" id="cart-delivery">Prepared for the next workday</p><button id="prepare-order" form="order-form" type="submit" class="button button-primary button-full">Prepare order summary <span aria-hidden="true">→</span></button><p class="checkout-disclaimer">This version does not submit orders online. You’ll need to share the summary with your coordinator for confirmation.</p></div>
+    <div class="drawer-footer"><div class="total-line"><span>Order total</span><strong id="cart-total">₱0.00</strong></div><p class="cart-meta" id="cart-delivery">Prepared for the next workday</p><button id="prepare-order" form="order-form" type="submit" class="button button-primary button-full">Prepare order summary <span aria-hidden="true">→</span></button><p id="cart-error" role="alert" class="checkout-error"></p><p class="checkout-disclaimer">Online requests are stored for staff review. An order is not final until Em’s Taste confirms it.</p></div>
   </aside>
 
   <div id="review-overlay" class="review-overlay" hidden>
     <div class="review-dialog" role="dialog" aria-modal="true" aria-labelledby="review-title" tabindex="-1">
       <button id="close-review" type="button" class="icon-close review-close" aria-label="Close order summary">×</button>
       <div class="review-check">✓</div><p class="section-kicker">READY TO SEND</p><h2 id="review-title">Your order summary</h2>
-      <p>This is not yet a confirmed order. Copy or share the details with your workplace coordinator, then wait for their confirmation.</p>
+      <p id="review-message">Your request is recorded, but Em’s Taste must confirm it before it is final.</p>
       <pre id="order-summary" class="order-summary"></pre>
       <div class="review-actions"><button id="copy-order" class="button button-primary" type="button">Copy order details</button><button id="share-order" class="button button-outline" type="button">Share order</button></div>
       <p id="share-feedback" role="status" aria-live="polite" class="share-feedback"></p>
