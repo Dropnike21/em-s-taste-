@@ -28,8 +28,11 @@ async function refreshMenu() {
       getDocs(collection(db, "menu"))
     ]);
     state.settings = settingsDoc.exists() ? settingsDoc.data() : null;
-    state.items = menuDocs.docs.map(record => ({ ...record.data(), id: record.id }));
-    state.usingLiveMenu = state.items.length > 0;
+    // Archived products remain in Firestore for historical orders,
+    // but are excluded from the customer-facing menu.
+    state.items = menuDocs.docs.map(record => ({ ...record.data(), id: record.id }))
+      .filter(item => item.archived !== true);
+    state.usingLiveMenu = menuDocs.size > 0;
     if (state.usingLiveMenu) {
       window.EMS_MENU = state.items;
       window.EMS_CONFIG.sampleMenu = false;
