@@ -163,3 +163,160 @@
 .customer-requests-history #customer-service-history{padding:14px 17px}
 .customer-requests-history .request-history-item:last-child{margin-bottom:0}
 .request-form [role="status"]:empty{display:none}
+
+
+/* Em's Taste storefront refresh | 2026 — a sign-in-first experience, without hiding the menu from guests. */
+:root{--cream:#fbf7f0;--paper:#fffcf7;--ink:#32251e;--terracotta:#a4492e;--terracotta-dark:#87371f;--line:#eadccb}
+.site-header{background:#fffcf8;border-bottom:1px solid #e9dacc;box-shadow:0 5px 28px #492e1410}
+.site-header .shell{width:min(1280px,calc(100% - 60px))}
+.nav-row{min-height:79px;gap:25px}
+.brand{gap:11px}
+.brand img{width:51px;height:51px}
+.brand-text strong{font-size:25px}
+.brand-text small{font-size:8px;letter-spacing:2.5px}
+.main-nav{margin-inline:auto;gap:6px;min-width:0}
+.main-nav a{display:inline-flex;align-items:center;min-height:39px;padding:7px 17px;border-radius:24px;white-space:nowrap;font-size:13px;font-weight:700;color:#5b4e40}
+.main-nav a:hover{color:var(--terracotta-dark);background:#f7ebde}
+.account-shortcut{padding:11px 19px;background:#a4492e;border:1px solid #a4492e;border-radius:99px;color:white;font-size:12px;font-weight:700;box-shadow:0 5px 17px #aa5c3b19}
+.account-shortcut:hover{background:#853a24;color:#fff}
+.cart-toggle{flex-shrink:0;min-width:64px;min-height:44px;padding:9px 13px;justify-content:center;border-radius:40px}
+.cart-toggle .cart-word{display:none}
+.cart-toggle .cart-count{width:23px;height:23px}
+.nav-toggle{border-radius:12px}
+
+/* Welcome is the first step for anonymous visitors; returning users skip it. */
+.welcome-gate{min-height:calc(100svh - 82px);display:flex;align-items:center;overflow:hidden;background:
+  radial-gradient(ellipse at 82% 29%,#fff8ed 0,transparent 40%),
+  linear-gradient(130deg,#fcf8f2 0%,#f6eadb 100%);border-bottom:1px solid #eddbc6}
+.welcome-layout{display:grid;grid-template-columns:minmax(0,1.07fr) minmax(0,.93fr);align-items:center;gap:54px;padding-block:76px}
+.welcome-copy{position:relative;z-index:2;max-width:665px}
+.welcome-eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:11px;letter-spacing:2.15px;font-weight:800;color:#98603c;text-transform:uppercase}
+.welcome-eyebrow-dot{width:9px;height:9px;background:#b66040;border-radius:50%;box-shadow:0 0 0 5px #f2dac5}
+.welcome-copy h1{font:500 clamp(47px,5.1vw,77px)/1.16 var(--heading);letter-spacing:-3.1px;margin:23px 0 23px;text-wrap:balance}
+.welcome-copy h1 em{font-weight:500;color:var(--terracotta);font-style:italic}
+.welcome-copy>p:not(.welcome-status){color:#726355;font-size:16px;line-height:1.85;max-width:515px}
+.welcome-auth-actions{display:flex;align-items:center;flex-wrap:wrap;gap:16px;margin-top:30px}
+.welcome-google{min-height:56px;padding:11px 22px;gap:13px;border-radius:12px;box-shadow:0 10px 22px #88462823;font-size:14px}
+.welcome-google span:last-child{font-size:17px;margin-left:4px}
+.google-circle{height:27px;width:27px;display:grid;place-items:center;border-radius:100px;background:white;color:#3876dd;font:800 16px Arial,sans-serif;letter-spacing:-.5px}
+.welcome-browse{border:0;background:transparent;min-height:45px;display:inline-flex;align-items:center;gap:12px;font-size:13px;font-weight:800;color:#72432e;padding:8px 5px}
+.welcome-browse:hover{text-decoration:underline;text-underline-offset:5px}
+.welcome-browse:disabled{opacity:.55}
+.welcome-status{font-size:12px;color:#9b5e42;min-height:1.6em;line-height:1.6;margin:13px 0 12px}
+.welcome-assurance{display:flex;gap:9px;align-items:center;flex-wrap:wrap;color:#86796b;font-size:11px;border-top:1px solid #e4d5c4;padding-top:16px;max-width:510px}
+.welcome-assurance>span:first-child{color:#50744c;font-weight:800}
+.assurance-sep{font-weight:700}
+.welcome-visual{min-height:490px;position:relative;display:grid;place-items:center}
+.welcome-visual-halo{height:445px;width:445px;max-width:96%;border-radius:50%;background:radial-gradient(circle,#f2ddc7 0,#edd7bf 65%,#e8cfb4 66%,#f7ecdf 67%);position:absolute;box-shadow:0 0 0 26px #eddbc9aa,0 0 0 27px #dfc3a85a}
+.welcome-visual-card{position:relative;z-index:2;background:#fff9f0;border:1px solid #e7cdb3;border-radius:28px;width:320px;max-width:85%;padding:36px 30px 31px;display:flex;flex-direction:column;align-items:center;text-align:center;box-shadow:0 22px 60px #8a4f2726;transform:rotate(-2deg)}
+.welcome-visual-card img{width:215px;height:215px;object-fit:contain;margin:8px auto 9px;filter:drop-shadow(0 14px 13px #ae6a3b1d)}
+.welcome-visual-card strong{font:italic 29px var(--heading);color:#925037;font-weight:500}
+.welcome-visual-card>span:last-child{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#95755f;margin-top:7px;font-weight:800}
+.welcome-kitchen-label{font-size:9px;font-weight:800;letter-spacing:2.4px;color:#956b54}
+.welcome-float{position:absolute;z-index:4;display:inline-flex;align-items:center;background:#fffefb;color:#95563e;font-size:11px;font-weight:800;box-shadow:0 9px 25px #69401c1c;padding:13px 18px;border:1px solid #f0e5d8;border-radius:9px}
+.welcome-float-top{right:-10px;top:57px;transform:rotate(5deg)}
+.welcome-float-bottom{bottom:40px;left:-15px;transform:rotate(-5deg)}
+
+/* After sign-in, customers see an intentionally compact, menu-first storefront. */
+.hero{background:linear-gradient(120deg,#fff9f0 0%,#f7e9d9 100%)}
+.hero-grid{min-height:410px;grid-template-columns:1.2fr .8fr;gap:25px;padding-block:44px}
+.hero h1{font-size:clamp(40px,4vw,57px);letter-spacing:-1.9px;line-height:1.17;margin-bottom:18px}
+.hero-lead{font-size:15px;line-height:1.75;margin-bottom:21px;max-width:470px}
+.hero-actions{gap:20px}
+.hero-points{margin-top:21px;gap:14px 20px;font-size:11px}
+.hero-art{height:330px}
+.hero-art-ring{height:296px;width:296px;box-shadow:0 0 0 16px #f3e6d6,0 0 0 17px #e2ceba80}
+.hero-art-inner{height:290px;width:285px}
+.hero-bowl{width:231px;margin:0 auto}
+.art-overline{margin-top:12px;font-size:8px}
+.art-script{font-size:19px}
+.art-caption{font-size:8px}
+.art-floating{font-size:9px;padding:8px 11px}
+.art-floating-top{right:5px;top:27px}
+.art-floating-bottom{bottom:30px;left:4px}
+.section-pad{padding-block:73px}
+.order-notice .notice-row{min-height:75px}
+.menu-section{background:#fffcf8}
+.menu-date-box{box-shadow:none;background:#fffaf4}
+.food-card{border-radius:16px;box-shadow:0 5px 20px #52321409}
+.food-card:hover{transform:translateY(-3px);box-shadow:0 12px 28px #4f301a18}
+.food-visual{height:178px}
+.food-content{padding:18px 19px}
+.food-content h3{font-size:20px}
+.food-description{line-height:1.6}
+.food-tag{font-size:10px}
+.add-button{border-radius:9px}
+#menu,#how-it-works,#account-section,#customer-services,#story{scroll-margin-top:95px}
+@media(max-width:1100px){
+  .main-nav{gap:0}
+  .main-nav a{font-size:12px;padding:7px 11px}
+  .nav-row{gap:13px}
+  .welcome-layout{gap:28px}
+  .welcome-visual-halo{width:370px;height:370px}
+}
+@media(max-width:930px){
+  .site-header .nav-row{gap:11px}
+  .nav-toggle{display:flex}
+  .main-nav{display:none;position:absolute;top:100%;left:0;right:0;background:#fffdfa;
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    flex-direction:column;align-items:stretch;gap:0;box-shadow:0 20px 35px #512b1e24;
+    z-index:28;padding:9px max(22px,calc((100vw - 640px)/2));max-height:calc(100dvh - 80px);overflow-y:auto}
+  .main-nav.is-open{display:flex}
+  .main-nav a{font-size:14px;padding:13px 12px;border-bottom:1px solid #f0e4d7;border-radius:0}
+  .main-nav a:last-child{border-bottom:0}
+  .welcome-layout{grid-template-columns:1.15fr .85fr;gap:14px;padding-block:60px}
+  .welcome-visual{min-height:370px}
+  .welcome-visual-halo{width:300px;height:300px}
+  .welcome-visual-card{width:250px;padding:24px 19px}
+  .welcome-visual-card img{width:166px;height:166px}
+  .welcome-float{font-size:9px}
+  .welcome-float-top{right:0;top:25px}
+  .welcome-float-bottom{left:0;bottom:12px}
+}
+@media(max-width:720px){
+  .site-header .nav-row{width:calc(100% - 28px);min-height:67px;gap:9px}
+  .site-header .brand{gap:6px}
+  .site-header .brand img{width:40px;height:40px}
+  .site-header .brand-text strong{font-size:19px}
+  .site-header .brand-text small{font-size:7px;letter-spacing:1.9px}
+  .account-shortcut{font-size:11px;padding:8px 12px}
+  .cart-toggle{min-height:37px;min-width:45px;padding:7px 8px;gap:5px}
+  .cart-toggle svg{height:18px;width:18px}
+  .cart-count{font-size:10px;min-width:18px;height:18px;width:18px}
+  .nav-toggle{height:38px;width:38px;font-size:21px}
+  .welcome-gate{min-height:calc(100svh - 67px)}
+  .welcome-layout{grid-template-columns:1fr;padding-block:58px 30px;gap:18px}
+  .welcome-copy h1{font-size:clamp(37px,9vw,58px);letter-spacing:-1.5px;margin:18px 0}
+  .welcome-copy>p:not(.welcome-status){font-size:14px;line-height:1.7}
+  .welcome-auth-actions{margin-top:23px;gap:9px 19px}
+  .welcome-google{font-size:13px;min-height:51px;padding:10px 17px}
+  .welcome-browse{font-size:12px}
+  .welcome-assurance{font-size:10px;padding-top:13px}
+  .welcome-visual{min-height:200px}
+  .welcome-visual-halo{width:182px;height:182px;box-shadow:0 0 0 12px #eddbc9aa}
+  .welcome-visual-card{width:175px;padding:12px;max-width:60%;border-radius:17px}
+  .welcome-visual-card img{width:90px;height:90px;margin:2px auto}
+  .welcome-visual-card strong{font-size:18px}
+  .welcome-visual-card>span:last-child{font-size:7px}
+  .welcome-kitchen-label{font-size:7px}
+  .welcome-float{display:none}
+  .hero-grid{min-height:0;grid-template-columns:1fr;padding-block:30px 25px}
+  .hero h1{font-size:clamp(32px,7.3vw,44px);line-height:1.16}
+  .hero-lead{font-size:13px;line-height:1.65;margin-bottom:17px}
+  .hero-art{display:none}
+  .hero-points{display:none}
+  .hero-actions .button{min-height:42px}
+  .section-pad{padding-block:54px}
+  .notice-row{min-height:0!important}
+}
+@media(max-width:410px){
+  .site-header .brand img{width:35px;height:35px}
+  .site-header .brand-text strong{font-size:16px}
+  .site-header .brand-text small{font-size:6px;letter-spacing:1.2px}
+  .account-shortcut{padding:7px 9px;font-size:10px}
+  .cart-toggle{min-width:40px;padding:6px;gap:3px}
+  .cart-count{min-width:17px;width:17px;height:17px}
+  .nav-toggle{width:35px;height:35px}
+  .welcome-layout{padding-top:45px}
+  .welcome-assurance .assurance-sep{display:none}
+}
