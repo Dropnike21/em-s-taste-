@@ -309,7 +309,7 @@
     $("#storefront-content").hidden = intro;
     $("#account-section").hidden = !signedIn;
     $("#welcome-google-login").disabled = !ready;
-    $("#welcome-browse").disabled = !ready;
+    $("#welcome-browse").disabled = false;
     $("#welcome-status").textContent = !ready
       ? "Checking your Google sign-in…"
       : live?.accountError
