@@ -200,6 +200,7 @@
     lastFocus = document.activeElement;
     cartOverlay.hidden = false;
     cartDrawer.classList.add("open");
+    cartDrawer.inert = false;
     cartDrawer.setAttribute("aria-hidden", "false");
     $("#open-cart").setAttribute("aria-expanded", "true");
     document.body.classList.add("no-scroll");
@@ -208,6 +209,7 @@
 
   function closeCart(restoreFocus = true) {
     cartDrawer.classList.remove("open");
+    cartDrawer.inert = true;
     cartDrawer.setAttribute("aria-hidden", "true");
     cartOverlay.hidden = true;
     $("#open-cart").setAttribute("aria-expanded", "false");
@@ -390,6 +392,23 @@
       if (event.key === "Escape") {
         if (!reviewOverlay.hidden) closeReview();
         else if (cartDrawer.classList.contains("open")) closeCart();
+      }
+      if (event.key === "Tab") {
+        const activeDialog = !reviewOverlay.hidden
+          ? $(".review-dialog") : cartDrawer.classList.contains("open") ? cartDrawer : null;
+        if (!activeDialog) return;
+        const focusables = [...activeDialog.querySelectorAll(
+          'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex="0"]'
+        )].filter(el => el.getClientRects().length && !el.closest("[hidden]"));
+        if (!focusables.length) {
+          event.preventDefault(); activeDialog.focus(); return;
+        }
+        const first = focusables[0], last = focusables[focusables.length-1];
+        if (event.shiftKey && (document.activeElement === first || !activeDialog.contains(document.activeElement))) {
+          event.preventDefault(); last.focus();
+        } else if (!event.shiftKey && (document.activeElement === last || !activeDialog.contains(document.activeElement))) {
+          event.preventDefault(); first.focus();
+        }
       }
     });
     $("#filters").addEventListener("click", e => {
