@@ -202,3 +202,35 @@
  .overview-task{gap:8px}
  .overview-task button{font-size:11px}
 }
+
+/* Quick meal changes and searchable order queues. */
+.admin-page .dish-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.admin-page .admin-dish{align-items:flex-start;flex-wrap:wrap}
+.admin-page .admin-dish>span:first-child{min-width:140px}
+.admin-page .dish-actions button{white-space:nowrap}
+.workspace-filterbar{display:flex;align-items:end;gap:15px;flex-wrap:wrap;margin:0 0 16px;padding:17px 18px;border:1px solid #e9ddd0;border-radius:11px;background:#fffdfa}
+.workspace-filterbar label{display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:700;color:#765e4b}
+.workspace-search{flex:1;min-width:200px}
+.workspace-search input{min-height:41px;width:100%;border:1px solid #dbcfbf;border-radius:7px;padding:9px 12px;color:var(--ink);background:#fff;font:13px var(--body)}
+.workspace-select{min-width:148px}
+.workspace-select select{min-height:41px;padding:8px 10px;border:1px solid #dbcfbf;border-radius:7px;background:#fff;color:var(--ink);font:13px var(--body)}
+.filter-result{color:#8b7b6e;font-size:11px;margin:0 0 10px;white-space:nowrap}
+.orders-workflow-hint{font-size:12px;color:#755d4b;line-height:1.6;background:#f7eadc;border-left:3px solid #ad6c4e;padding:12px 15px;border-radius:6px;margin:0 0 20px}
+.order-footnote{font-size:11px;color:#9c8777;margin:13px 0 0}
+.admin-page .order-actions label{display:flex;flex-direction:column;gap:5px}
+.admin-page .order-actions select{min-height:39px;min-width:144px;max-width:100%}
+.admin-page .order-actions button{min-height:39px;align-self:flex-end}
+.empty-workspace-state{border:1px dashed #dbc8b6;border-radius:10px;background:#fffdf9;padding:29px;text-align:center;color:#816d5d}
+.empty-workspace-state strong{display:block;font:600 22px var(--heading);color:var(--ink)}
+.empty-workspace-state p{font-size:12px;margin:8px 0 0}
+.order-status{white-space:nowrap}
+.order-status.pending{background:#fff3e1;color:#a36321}
+.order-status.confirmed{background:#e6f0de;color:#466b40}
+.order-status.completed{background:#e8eeeb;color:#3e695a}
+.order-status.cancelled{background:#f2e8e6;color:#9c5c57}
+@media(max-width:620px){
+ .workspace-filterbar{padding:12px}
+ .workspace-search,.workspace-select{width:100%}
+ .filter-result{margin:0}
+ .order-actions select{min-width:125px}
+}
