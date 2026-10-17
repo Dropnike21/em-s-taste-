@@ -24,16 +24,21 @@
         <img src="logo.svg" alt="" width="49" height="49">
         <span class="brand-text"><strong>Em’s Taste</strong><small>LUTONG BAHAY</small></span>
       </a>
-      <nav class="main-nav" aria-label="Main navigation">
+      <nav class="main-nav" id="site-navigation" aria-label="Main navigation">
         <a href="#menu">Our Menu</a>
-        <a href="#how-it-works">How it works</a>
-        <a href="#story">Our Story</a>
+        <a href="#how-it-works">How ordering works</a>
+        <a href="#account-section">My account & orders</a>
         <a href="#customer-services">Requests & feedback</a>
+        <a href="#story">Our Story</a>
+        <a href="admin.html" class="staff-portal-link">Staff / Admin portal</a>
       </nav>
       <button id="account-shortcut" class="account-shortcut" type="button" aria-label="Customer account and orders">Sign in</button>
       <button id="open-cart" class="cart-toggle" type="button" aria-controls="cart-drawer" aria-expanded="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 4h2l2 11h11l3-8H6M9 20h.01M17 20h.01" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span class="cart-word">My order</span><span id="cart-count" class="cart-count">0</span>
+      </button>
+      <button id="nav-toggle" class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-navigation" aria-label="Open navigation menu">
+        <span aria-hidden="true">☰</span>
       </button>
     </div>
   </header>
@@ -82,23 +87,50 @@
       </div>
     </section>
 
+    <section id="menu" class="menu-section section-pad">
+      <div class="shell">
+        <div class="section-top">
+          <div><p class="section-kicker">GOOD FOOD, GOOD DAYS</p><h2>What’s cooking <em>at Em’s?</em></h2><p class="section-desc">Pick your cravings, select how many, and prepare your order before the cutoff.</p></div>
+          <div class="menu-date-box"><span>MENU FOR</span><strong id="menu-date">Next workday</strong><small id="sample-warning">Sample menu — for preview only</small></div>
+        </div>
+        <div class="menu-toolbar"><div id="filters" class="filters" role="group" aria-label="Filter menu"><button type="button" class="filter active" data-category="all" aria-pressed="true">All favorites</button><button type="button" class="filter" data-category="ulam" aria-pressed="false">Ulam</button><button type="button" class="filter" data-category="sides" aria-pressed="false">Rice & extras</button></div><span id="menu-count" class="menu-count"></span></div>
+        <div id="menu-grid" class="menu-grid" aria-live="polite"></div>
+        <p id="menu-disclaimer" class="menu-disclaimer">* Sample menu shown for preview. Actual dishes and prices will appear after publication.</p>
+      </div>
+    </section>
+
+    <section id="how-it-works" class="steps-section section-pad">
+      <div class="shell">
+        <p class="section-kicker">SIMPLE AS 1, 2, 3</p>
+        <h2>Home-cooked happiness,<br><em>made easy.</em></h2>
+        <div class="steps">
+          <article class="step"><span class="step-number">01</span><div class="step-icon" aria-hidden="true">▤</div><h3>Browse the menu</h3><p>See the available meals and choose what you’d like to eat on the next workday.</p></article>
+          <article class="step"><span class="step-number">02</span><div class="step-icon" aria-hidden="true">◷</div><h3>Order by 11 PM</h3><p>Finalize your selections before 11:00 PM Philippine time, Sunday to Thursday.</p></article>
+          <article class="step"><span class="step-number">03</span><div class="step-icon" aria-hidden="true">♡</div><h3>Request & confirm</h3><p>Submit your request online and wait for the Em’s Taste team to confirm it.</p></article>
+        </div>
+        <div class="step-footnote">For now, orders are coordinated through participating workplaces. Independent delivery is not yet available.</div>
+      </div>
+    </section>
+
     <section id="account-section" class="customer-section">
       <div class="shell customer-shell">
         <div class="customer-account-row">
           <div>
-            <p class="section-kicker">WELCOME TO EM’S TASTE</p>
-            <h2 id="customer-heading">Your meals, your account.</h2>
-            <p id="customer-status" role="status" aria-live="polite">Sign in with Google to place an order, review past meals, and leave feedback.</p>
+            <p class="section-kicker">YOUR EM’S TASTE ACCOUNT</p>
+            <h2 id="customer-heading">Your orders, all in one place.</h2>
+            <p id="customer-status" role="status" aria-live="polite">Sign in to order and track your meals. Browsing the menu is always free.</p>
           </div>
           <div class="customer-actions">
             <button id="customer-google-login" class="button button-outline" type="button">Continue with Google</button>
-            <button id="customer-refresh" class="button button-outline" type="button" hidden>Refresh my orders</button>
+            <button id="customer-refresh" class="button button-outline" type="button" hidden>Refresh orders</button>
             <button id="customer-signout" class="button button-outline" type="button" hidden>Sign out</button>
           </div>
         </div>
         <div id="customer-history" hidden>
-          <h3>Your order history</h3>
-          <div id="my-orders" class="my-orders"><p class="muted">Loading your orders…</p></div>
+          <details id="orders-details" class="account-orders-details">
+            <summary>View your order history <span aria-hidden="true">⌄</span></summary>
+            <div id="my-orders" class="my-orders"><p class="muted">Loading your orders…</p></div>
+          </details>
         </div>
         <p class="customer-privacy">We use your Google identity to link your requests to your account and prevent duplicate orders. <a href="privacy.html">How we use your information</a>.</p>
       </div>
@@ -107,10 +139,11 @@
     <section id="customer-services" class="customer-services section-pad">
       <div class="shell">
         <p class="section-kicker">WE LISTEN TO OUR CUSTOMERS</p>
-        <h2>Requests, bookings & <em>feedback.</em></h2>
-        <p class="section-desc">Ask Mama Em to cook something new, request a large meal booking, or tell us what we can improve.</p>
+        <h2>We’d love to <em>hear from you.</em></h2>
+        <p class="section-desc">Have a meal suggestion, feedback, or a large workplace booking? Choose one of the options below.</p>
         <p id="services-auth" class="service-auth">Sign in with Google in the account section above to submit a request or report.</p>
         <div id="customer-service-forms" class="customer-service-grid" hidden>
+          <details class="request-disclosure"><summary><strong>Suggest a dish or send feedback</strong><small>Menu requests, ratings, bugs & issues</small></summary>
           <form id="feedback-form" class="admin-card request-form">
             <h3>Suggestions and feedback</h3>
             <p class="muted">For meal ideas, website/service ratings, bugs, issues, or other concerns. Reports are not publicly posted.</p>
@@ -139,6 +172,8 @@
             <p role="status" id="feedback-status"></p>
             <p class="form-hint">You can submit one entry per category per day. Food ratings from completed purchases are separately available in My orders.</p>
           </form>
+          </details>
+          <details class="request-disclosure"><summary><strong>Book 51+ meals</strong><small>Request a bulk quotation from our team</small></summary>
           <form id="bulk-form" class="admin-card request-form">
             <h3>Large meal booking — 51+ servings</h3>
             <p class="muted">For large workplace requests. Submit the number of meals and your preferred date; our staff will review availability and send a quotation. No booking is confirmed automatically.</p>
@@ -155,36 +190,12 @@
             <button type="submit" class="button button-primary">Request staff quotation</button>
             <p role="status" id="bulk-status"></p>
           </form>
+          </details>
         </div>
         <div id="customer-request-history" class="customer-requests-history" hidden>
           <h3>Your booking requests and reports</h3>
           <div id="customer-service-history"><p class="muted">Loading your requests…</p></div>
         </div>
-      </div>
-    </section>
-
-    <section id="menu" class="menu-section section-pad">
-      <div class="shell">
-        <div class="section-top">
-          <div><p class="section-kicker">GOOD FOOD, GOOD DAYS</p><h2>What’s cooking <em>at Em’s?</em></h2><p class="section-desc">Pick your cravings, select how many, and prepare your order before the cutoff.</p></div>
-          <div class="menu-date-box"><span>MENU FOR</span><strong id="menu-date">Next workday</strong><small id="sample-warning">Sample menu — for preview only</small></div>
-        </div>
-        <div class="menu-toolbar"><div id="filters" class="filters" role="group" aria-label="Filter menu"><button type="button" class="filter active" data-category="all" aria-pressed="true">All favorites</button><button type="button" class="filter" data-category="ulam" aria-pressed="false">Ulam</button><button type="button" class="filter" data-category="sides" aria-pressed="false">Rice & extras</button></div><span id="menu-count" class="menu-count"></span></div>
-        <div id="menu-grid" class="menu-grid" aria-live="polite"></div>
-        <p id="menu-disclaimer" class="menu-disclaimer">* Sample menu shown for preview. Actual dishes and prices will appear after publication.</p>
-      </div>
-    </section>
-
-    <section id="how-it-works" class="steps-section section-pad">
-      <div class="shell">
-        <p class="section-kicker">SIMPLE AS 1, 2, 3</p>
-        <h2>Home-cooked happiness,<br><em>made easy.</em></h2>
-        <div class="steps">
-          <article class="step"><span class="step-number">01</span><div class="step-icon" aria-hidden="true">▤</div><h3>Browse the menu</h3><p>See the available meals and choose what you’d like to eat on the next workday.</p></article>
-          <article class="step"><span class="step-number">02</span><div class="step-icon" aria-hidden="true">◷</div><h3>Order by 11 PM</h3><p>Finalize your selections before 11:00 PM Philippine time, Sunday to Thursday.</p></article>
-          <article class="step"><span class="step-number">03</span><div class="step-icon" aria-hidden="true">♡</div><h3>Request & confirm</h3><p>Submit your request online and wait for the Em’s Taste team to confirm it.</p></article>
-        </div>
-        <div class="step-footnote">For now, orders are coordinated through participating workplaces. Independent delivery is not yet available.</div>
       </div>
     </section>
 
