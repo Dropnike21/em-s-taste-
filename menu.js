@@ -9,7 +9,7 @@
 window.EMS_CONFIG = {
   timezone: "Asia/Manila",
   cutoffHour: 23,
-  previewMode: true, // Allows testing the order summary while ordering is closed.
+  previewMode: false, // Browser previews never submit orders without Firestore setup.
   sampleMenu: true    // Turn off after replacing ALL example dishes and prices.
 };
 
