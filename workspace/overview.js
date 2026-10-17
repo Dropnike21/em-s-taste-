@@ -29,7 +29,8 @@ export async function refreshOverview() {
       const { hour, weekday } = philippinesTime();
       const eligible = ["Sun", "Mon", "Tue", "Wed", "Thu"].includes(weekday) && hour < 23;
       const correctDay = menuDate === dateNext();
-      const available = Boolean(settings.ordersOpen && correctDay && eligible);
+      const availableCount = menuItems().filter(item => item.available === true).length;
+      const available = Boolean(settings.ordersOpen && correctDay && eligible && availableCount > 0);
       state.textContent = available ? "Online pre-orders open" :
         settings.ordersOpen ? "Ordering paused by schedule" : "Online pre-orders closed";
       state.classList.toggle("open", available);
