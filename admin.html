@@ -41,20 +41,23 @@
 
     <div id="dashboard-view" hidden>
       <div class="admin-title-row">
-        <div><p class="section-kicker">YOUR KITCHEN CONTROL CENTER</p><h1>Good morning, <em>team Em’s.</em></h1><p>Manage tomorrow’s menu and keep orders organized in one place.</p></div>
+        <div><p id="workspace-role" class="section-kicker">KITCHEN WORKSPACE</p><h1>Good morning, <em>team Em’s.</em></h1><p>Manage tomorrow’s menu and keep orders organized in one place.</p></div>
         <button id="refresh-dashboard" type="button" class="button button-outline">↻ Refresh</button>
       </div>
       <div class="stat-row">
         <div class="stat-card"><span>Menu items</span><strong id="stat-items">0</strong><small>Saved in Firestore</small></div>
         <div class="stat-card"><span>Pending orders</span><strong id="stat-pending">0</strong><small>Awaiting staff confirmation</small></div>
-        <div class="stat-card"><span>Customers</span><strong id="stat-customers">0</strong><small>Registered customer profiles</small></div>
-        <div class="stat-card"><span>Recorded total</span><strong id="stat-total">₱0.00</strong><small>Recent requests, not sales</small></div>
+        <div class="stat-card admin-stat" data-roles="admin"><span>Customers</span><strong id="stat-customers">0</strong><small>Registered customer profiles</small></div>
+        <div class="stat-card"><span>Pending bulk</span><strong id="stat-bulk">0</strong><small>Requests above 50 servings</small></div><div class="stat-card"><span>Recorded total</span><strong id="stat-total">₱0.00</strong><small>Recent requests, not sales</small></div>
       </div>
       <div class="admin-tabs" role="tablist" aria-label="Dashboard sections">
         <button type="button" role="tab" aria-controls="menu-panel" aria-selected="true" class="active" data-panel="menu-panel">Menu & pricing</button>
         <button type="button" role="tab" aria-controls="orders-panel" aria-selected="false" data-panel="orders-panel">Orders</button>
-        <button type="button" role="tab" aria-controls="settings-panel" aria-selected="false" data-panel="settings-panel">Ordering settings</button>
-        <button type="button" role="tab" aria-controls="insights-panel" aria-selected="false" data-panel="insights-panel">Customers & insights</button>
+        <button type="button" role="tab" aria-controls="bulk-panel" aria-selected="false" data-panel="bulk-panel">Bulk orders</button>
+        <button type="button" role="tab" aria-controls="settings-panel" aria-selected="false" data-panel="settings-panel" hidden>Ordering settings</button>
+        <button type="button" role="tab" aria-controls="insights-panel" aria-selected="false" data-panel="insights-panel" hidden>Customers & insights</button>
+        <button type="button" role="tab" aria-controls="team-panel" aria-selected="false" data-panel="team-panel" hidden>Team permissions</button>
+        <button type="button" role="tab" aria-controls="reports-panel" aria-selected="false" data-panel="reports-panel" hidden>Reports & requests</button>
       </div>
       <section id="menu-panel" class="admin-panel" role="tabpanel">
         <div class="panel-title"><div><h2>Today’s recipes, tomorrow’s meals.</h2><p>Create a menu item, set its price, and choose whether it's available.</p></div></div>
@@ -73,8 +76,15 @@
             <label class="check-line"><input type="checkbox" id="dish-available" checked> Available for ordering</label>
             <div class="form-actions"><button class="button button-primary" id="save-dish" type="submit">Save dish</button><button class="button button-outline" id="cancel-edit" type="button">Clear</button></div>
           </form>
-          <div class="admin-card"><h3>Saved dishes</h3><div id="admin-dishes" class="admin-dishes"><p class="muted">Loading menu…</p></div></div>
+          <div class="admin-card"><h3>Saved dishes</h3><div id="admin-dishes" class="admin-dishes"><p class="muted">Loading menu…</p></div>
+            <h3 class="subsection-title">Customer menu suggestions</h3>
+            <div id="staff-menu-suggestions"><p class="muted">Loading suggestions…</p></div>
+          </div>
         </div>
+      </section>
+      <section id="bulk-panel" class="admin-panel" role="tabpanel" hidden>
+        <div class="panel-title"><div><h2>Large meal bookings</h2><p>Requests for more than 50 servings require manual quotation and staff confirmation. These are not automatically accepted sales.</p></div></div>
+        <div id="bulk-list" class="admin-orders"><p class="muted">Loading bulk inquiries…</p></div>
       </section>
       <section id="orders-panel" class="admin-panel" role="tabpanel" hidden>
         <div class="panel-title"><div><h2>Incoming order requests</h2><p>Confirm orders with each customer or workplace coordinator. Updates are visible to staff, not automatically messaged to customers.</p></div><button id="export-csv" class="button button-outline" type="button">Export CSV</button></div>
@@ -100,6 +110,25 @@
           <p class="muted">Recent 100 customer profiles. Use Block only for demonstrated abuse; blocked accounts cannot submit orders or reviews.</p>
           <div id="customer-directory"><p class="muted">Loading customers…</p></div>
         </div>
+      </section>
+      <section id="team-panel" class="admin-panel" role="tabpanel" hidden>
+        <div class="panel-title"><div><h2>Team access and permissions</h2><p>Assign staff or administrator roles using the member's Firebase Authentication UID. Only administrators can grant these permissions.</p></div></div>
+        <div class="admin-split">
+          <form id="team-form" class="admin-card">
+            <h3>Authorize team member</h3>
+            <label for="member-uid">Firebase user UID *</label><input id="member-uid" required maxlength="128" placeholder="Google user's Firebase UID">
+            <label for="member-label">Member name / label</label><input id="member-label" maxlength="80" placeholder="e.g. Kitchen coordinator">
+            <label for="member-role">Access level *</label><select id="member-role"><option value="staff">Staff — operations only</option><option value="admin">Administrator — all management</option></select>
+            <label class="check-line"><input id="member-active" type="checkbox" checked>Account active</label>
+            <button type="submit" class="button button-primary">Save team access</button>
+            <p class="muted">A member must sign in with Google once to obtain their UID. The original owner record in <code>admins/{uid}</code> remains separately protected.</p>
+          </form>
+          <div class="admin-card"><h3>Authorized team</h3><div id="team-directory"><p class="muted">Loading team…</p></div></div>
+        </div>
+      </section>
+      <section id="reports-panel" class="admin-panel" role="tabpanel" hidden>
+        <div class="panel-title"><div><h2>Customer reports and feature requests</h2><p>Only administrators can read service ratings, bug reports and customer issues. Review and resolve each report.</p></div></div>
+        <div id="reports-list" class="admin-orders"><p class="muted">Loading reports…</p></div>
       </section>
       <section id="settings-panel" class="admin-panel" role="tabpanel" hidden>
         <div class="panel-title"><div><h2>Pre-order settings</h2><p>Set the menu’s intended workday and choose whether to accept order requests.</p></div></div>
