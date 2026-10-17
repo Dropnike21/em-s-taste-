@@ -133,9 +133,11 @@ window.EMS_SUBMIT = async ({ name, workplace, note, items, total, serviceDate })
   if (items.reduce((count, item) => count + item.quantity, 0) > 10) throw new Error("There is a limit of ten servings per order.");
   const orderId = customer.uid + "_" + dayKey;
   const reference = doc(db, "orders", orderId);
-  if ((await getDoc(reference)).exists()) {
-    throw new Error("You already have an order request for this workday. Open My orders to view its status.");
+  if (state.orders.some(order => order.id === orderId)) {
+    throw new Error("You already have an order for this workday. View it under My orders.");
   }
+  // Firestore rules allow CREATE only; updates/overwrites are blocked for customers.
+  // Avoid reading a nonexistent private order document (get is owner-restricted).
   const lines = items.map(item => ({
     id: item.id, name: item.name, quantity: item.quantity, unitPrice: item.unitPrice
   }));
