@@ -10,7 +10,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
 
 const state = {
-  ready: false, error: null, settings: null, items: [], usingLiveMenu: false,
+  ready: false, error: null, settings: null, items: [], catalog: [], weeklyPreview: [],
+  plannedDay: false, usingLiveMenu: false,
   authReady: false, customer: null, workspaceRole: null, orders: [], reviews: [], accountError: null
 };
 window.EMS_LIVE_STATE = state;
@@ -22,6 +23,28 @@ const validGoogle = async user => {
   return result.claims?.firebase?.sign_in_provider === "google.com";
 };
 
+// Customers order for the service day following the next eligible cutoff.
+function serviceDateKey(){
+ const p=Object.fromEntries(new Intl.DateTimeFormat("en-US",{
+  timeZone:"Asia/Manila",year:"numeric",month:"2-digit",day:"2-digit",
+  hour:"2-digit",hourCycle:"h23"
+ }).formatToParts(new Date()).map(x=>[x.type,x.value]));
+ const today=new Date(Date.UTC(Number(p.year),Number(p.month)-1,Number(p.day)));
+ const eligible=[0,1,2,3,4].includes(today.getUTCDay())&&Number(p.hour)<23;
+ if(!eligible){
+  do{today.setUTCDate(today.getUTCDate()+1);}
+  while(![0,1,2,3,4].includes(today.getUTCDay()));
+ }
+ today.setUTCDate(today.getUTCDate()+1);
+ return isoDate(today);
+}
+function dayKeysFor(dateKey){
+ const monday=new Date(dateKey+"T00:00:00.000Z");
+ monday.setUTCDate(monday.getUTCDate()-(monday.getUTCDay()+6)%7);
+ return Array.from({length:5},(_,day)=>{
+  const d=new Date(monday);d.setUTCDate(d.getUTCDate()+day);return isoDate(d);
+ });
+}
 async function refreshMenu() {
   try {
     const [settingsDoc, menuDocs] = await Promise.all([
@@ -29,11 +52,36 @@ async function refreshMenu() {
       getDocs(collection(db, "menu"))
     ]);
     state.settings = settingsDoc.exists() ? settingsDoc.data() : null;
-    // Archived products remain in Firestore for historical orders,
-    // but are excluded from the customer-facing menu.
-    state.items = menuDocs.docs.map(record => ({ ...record.data(), id: record.id }))
-      .filter(item => item.archived !== true);
+    const catalog = menuDocs.docs.map(record => ({ ...record.data(), id: record.id }))
+      .filter(item => item.archived !== true && item.configured !== false &&
+        Number.isInteger(item.price) && item.price > 0);
+    state.catalog = catalog;
     state.usingLiveMenu = menuDocs.size > 0;
+    state.weeklyPreview = [];
+    state.plannedDay = false;
+    const serviceKey = serviceDateKey();
+    const keys = dayKeysFor(serviceKey);
+    try {
+      const week = await Promise.all(keys.map(key=>getDoc(doc(db,"menuDays",key))));
+      state.weeklyPreview = week.map((snapshot,index)=>({
+        dayKey:keys[index],
+        exists:snapshot.exists(),
+        published:snapshot.exists()&&snapshot.data().published===true,
+        itemIds:snapshot.exists()&&Array.isArray(snapshot.data().itemIds)?
+          snapshot.data().itemIds:[]
+      }));
+      const chosen = state.weeklyPreview.find(day=>day.dayKey===serviceKey);
+      state.plannedDay = Boolean(chosen?.exists);
+      // A saved plan overrides legacy global availability for its particular day.
+      state.items = chosen?.exists
+        ? catalog.filter(item=>chosen.published && chosen.itemIds.includes(item.id) && item.available===true)
+        : catalog;
+    } catch (planError) {
+      // Older deployed rules may not yet allow reads of menuDays. Keep the
+      // pre-existing store behavior working until the new rules are published.
+      console.warn("Weekly menu unavailable; showing existing catalog availability:",planError);
+      state.items = catalog;
+    }
     if (state.usingLiveMenu) {
       window.EMS_MENU = state.items;
       window.EMS_CONFIG.sampleMenu = false;
