@@ -29,6 +29,11 @@ export function initSettings(){
    });
    window.dispatchEvent(new Event("ems-workspace-menu-updated"));
    msg("Storefront workday and order availability saved.",true);
-  }catch(error){console.error(error);msg("Only admins can change global ordering settings.");}
+  } catch (error) {
+   console.error(error);
+   msg("Could not save ordering settings. Check administrator permissions or your connection.");
+  } finally {
+   button.disabled = false;
+  }
  });
 }
