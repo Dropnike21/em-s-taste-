@@ -75,7 +75,11 @@ async function loadHistory(){
  }catch(error){
   console.error(error);
   $("#customer-service-history").innerHTML='<p class="muted">Unable to read your requests. Check Firestore rules.</p>';
- }finally{loading=false;}
+ }finally{
+  loading=false;
+  const current=customer();
+  if(current&&current.uid!==profile.uid&&loadedUid!==current.uid)queueMicrotask(loadHistory);
+ }
 }
 $("#feedback-form").addEventListener("submit",async event=>{
  event.preventDefault();
