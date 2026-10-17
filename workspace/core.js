@@ -65,9 +65,8 @@ async function getRole(user){
 async function loadAll(){
  if(!role)return;
  msg("Loading kitchen workspace…");
- const essentials=[refreshMenu(),refreshOrders(),refreshBulk()];
+ const essentials=[refreshMenu(),refreshOrders(),refreshBulk(),refreshSuggestions()];
  if(role==="admin")essentials.push(refreshSettings(),refreshPeople(),refreshReports());
- else essentials.push(refreshSuggestions());
  const outcomes=await Promise.allSettled(essentials);
  if(outcomes.every(x=>x.status==="fulfilled")) refreshPrep();
  if(role==="admin"&&outcomes.every(x=>x.status==="fulfilled")){
