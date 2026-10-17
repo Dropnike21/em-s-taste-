@@ -44,11 +44,17 @@ function reset(){
  $("#dish-template").value="";
  $("#dish-available").checked=false;
  $("#dish-editor").hidden=true;
+ $("#dish-editor").querySelectorAll("input,select,textarea,button").forEach(field=>{
+  field.disabled=true;
+ });
  $("#dish-form-title").textContent="Add a menu item";
  $("#save-dish").textContent="Save dish";
 }
 function fill(d){
  $("#dish-editor").hidden=false;
+ $("#dish-editor").querySelectorAll("input,select,textarea,button").forEach(field=>{
+  field.disabled=false;
+ });
  $("#dish-id").value=d.id||"";
  $("#dish-name").value=d.name||"";
  $("#dish-description").value=d.description||"";
@@ -80,7 +86,9 @@ export function initMenu(){
  $("#dish-list-filter").addEventListener("change",render);
  $("#dish-template").addEventListener("change",e=>choose(e.target.value));
  $("#custom-dish").addEventListener("click",()=>{
-   reset();$("#dish-editor").hidden=false;$("#dish-form-title").textContent="Create a custom meal";
+   reset();$("#dish-editor").hidden=false;
+   $("#dish-editor").querySelectorAll("input,select,textarea,button").forEach(field=>{field.disabled=false});
+   $("#dish-form-title").textContent="Create a custom meal";
    $("#dish-name").focus();
  });
  $("#cancel-edit").addEventListener("click",reset);
