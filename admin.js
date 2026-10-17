@@ -1,11 +1,11 @@
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, getIdTokenResult } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc, serverTimestamp, Timestamp, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc, serverTimestamp, Timestamp, query, orderBy, limit, getCountFromServer } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 const $ = s => document.querySelector(s);
 const money = v => new Intl.NumberFormat("en-PH", {style:"currency", currency:"PHP"}).format(Number(v)||0);
 const escapeHtml = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-let menu = [], orders = [], authorized = false;
+let menu = [], orders = [], customers = [], reviews = [], authorized = false;
 const message = (s, good=false) => { $("#page-message").textContent = s; $("#page-message").classList.toggle("good",good); };
 const canEdit = () => authorized && !!auth.currentUser;
 function phNextWorkday() {
@@ -78,10 +78,11 @@ async function refresh() {
   if(!canEdit())return;
   message("Refreshing dashboard…");
   try {
-    await Promise.all([loadMenu(),loadOrders(),loadSettings()]);
+    await Promise.all([loadMenu(),loadOrders(),loadSettings(),loadCustomers(),loadReviews()]);
     $("#stat-items").textContent=menu.length;
     $("#stat-pending").textContent=orders.filter(x=>x.status==="pending").length;
     $("#stat-total").textContent=money(orders.filter(x=>x.status!=="cancelled").reduce((s,x)=>s+(Number(x.total)||0),0));
+    updateInsights();
     message("Dashboard loaded. Displays up to 100 recent orders.",true);
   }catch(err){console.error(err);message("Could not read Firestore. Publish the security rules and authorize this administrator.");}
 }
@@ -139,7 +140,7 @@ $("#settings-form").addEventListener("submit",async e=>{
     message("Please choose a valid Monday–Friday date.");return;
   }
   try {
-    await setDoc(doc(db,"settings","storefront"),{menuDate:Timestamp.fromDate(date),ordersOpen:$("#orders-open").checked,updatedAt:serverTimestamp()});
+    await setDoc(doc(db,"settings","storefront"),{menuDate:Timestamp.fromDate(date),menuDayKey:dateString,ordersOpen:$("#orders-open").checked,updatedAt:serverTimestamp()});
     message("Menu workday and order switch saved.",true);
   } catch(err){console.error(err);message("Cannot save settings.");}
 });
@@ -176,6 +177,65 @@ $("#export-csv").addEventListener("click",()=>{
   setTimeout(()=>URL.revokeObjectURL(url),1000);
   message("CSV exported. Store customer information securely.",true);
 });
+async function loadCustomers() {
+  const [profiles, count] = await Promise.all([
+    getDocs(query(collection(db, "customers"), limit(100))),
+    getCountFromServer(collection(db, "customers"))
+  ]);
+  customers = profiles.docs.map(item => ({ uid: item.id, ...item.data() }));
+  $("#stat-customers").textContent = count.data().count;
+  $("#customer-directory").innerHTML = customers.length
+    ? customers.map(customer => '<div class="customer-directory-item">' +
+        '<div><strong>' + escapeHtml(customer.displayName) + '</strong>' +
+        '<small>' + escapeHtml(customer.email) + '</small>' +
+        '<small>' + (customer.blocked ? "Account blocked" : "Active") + '</small></div>' +
+        '<button type="button" data-block-customer="' + escapeHtml(customer.uid) + '"' +
+        ' class="button button-outline">' + (customer.blocked ? "Unblock" : "Block") + '</button>' +
+      '</div>').join("")
+    : '<p class="muted">There are no customer profiles yet.</p>';
+}
+async function loadReviews() {
+  const snapshot = await getDocs(query(collection(db, "reviews"), limit(100)));
+  reviews = snapshot.docs.map(item => ({ id: item.id, ...item.data() }))
+    .sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
+}
+function updateInsights() {
+  const counts = new Map();
+  orders.filter(o=>o.status!=="cancelled").forEach(order => {
+    (order.items || []).forEach(item => {
+      const name = String(item.name || "Unnamed dish");
+      counts.set(name, (counts.get(name)||0) + Number(item.quantity || 0));
+    });
+  });
+  const popular = [...counts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
+  $("#top-dishes").innerHTML = popular.length
+    ? popular.map(([dish,quantity])=>'<div class="insight-row"><strong>'+escapeHtml(dish)+'</strong><span>'+quantity+' servings</span></div>').join("")
+    : '<p class="muted">No order data yet.</p>';
+  const avg = reviews.length ? reviews.reduce((n,x)=>n+Number(x.rating||0),0)/reviews.length : null;
+  $("#rating-average").textContent = avg === null ? "No ratings yet" : avg.toFixed(1)+" / 5 · "+reviews.length+" review(s)";
+  $("#customer-feedback").innerHTML = reviews.length
+    ? reviews.slice(0,30).map(item=>'<div class="feedback-line"><strong>'+Number(item.rating)+' / 5 ★</strong> <small>Order '+escapeHtml(item.orderId?.slice(-15)||"")+'</small><p>'+escapeHtml(item.comment || "Rating only")+'</p></div>').join("")
+    : '<p class="muted">Customers can leave one private review after staff marks their order completed.</p>';
+}
+$("#customer-directory").addEventListener("click", async event => {
+  const button = event.target.closest("[data-block-customer]");
+  if(!button || !canEdit())return;
+  const customer = customers.find(item=>item.uid===button.dataset.blockCustomer);
+  if(!customer)return;
+  const action = customer.blocked ? "unblock" : "block";
+  if(!window.confirm("Are you sure you want to "+action+" this customer account?"))return;
+  button.disabled=true;
+  try {
+    await updateDoc(doc(db, "customers", customer.uid), { blocked: !customer.blocked });
+    await loadCustomers();
+    message("Customer account updated. This affects new orders and feedback.",true);
+  } catch(err){
+    console.error(err);
+    message("Unable to update customer account.");
+    button.disabled=false;
+  }
+});
+
 document.querySelectorAll("[data-panel]").forEach(tab=>tab.addEventListener("click",()=>{
   document.querySelectorAll("[data-panel]").forEach(b=>{
     const active=b===tab;b.classList.toggle("active",active);
