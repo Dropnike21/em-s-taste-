@@ -32,16 +32,11 @@
       <img src="logo.svg" width="94" height="94" alt="">
       <p class="section-kicker">WELCOME BACK</p>
       <h1 id="login-title">Sign in to <em>Em’s Taste</em></h1>
-      <p class="card-intro">Use your authorized administrator email and password.</p>
-      <form id="login-form">
-        <label for="login-email">Email address</label>
-        <input id="login-email" type="email" autocomplete="username" required placeholder="admin@example.com">
-        <label for="login-password">Password</label>
-        <input id="login-password" type="password" autocomplete="current-password" required placeholder="Your password">
-        <button type="submit" id="login-submit" class="button button-primary button-full">Sign in</button>
-      </form>
-      <button id="forgot-password" class="forgot-link" type="button">Forgot password? Send a reset email</button>
-      <p class="form-hint">Administrators are set up privately in Firebase Console. Public account registration is disabled.</p>
+      <p class="card-intro">Use your Facebook account to access the kitchen dashboard. Only pre-approved administrators can enter.</p>
+      <button id="facebook-login" type="button" class="button facebook-login-button button-full">
+        <span class="facebook-mark" aria-hidden="true">f</span> Continue with Facebook
+      </button>
+      <p class="form-hint">No separate Em’s Taste username or password is needed. If this is your first sign-in, an authorized owner must approve your Firebase user ID before you can manage the business.</p>
     </section>
 
     <div id="dashboard-view" hidden>
