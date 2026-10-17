@@ -66,7 +66,9 @@ function renderProducts(){
     (eligible?peso(d.price):"Set a price and activate in Products")+
     '</small></span></label>';
  }).join("") || '<p class="muted">No products match. Set up your catalog in Menu & products first.</p>';
- $("#weekly-copy-day").disabled=dayIndex===0;
+ $("#weekly-copy-day").disabled=false;
+ $("#weekly-copy-day").textContent=dayIndex===0 ?
+   "Copy Monday to Tue–Fri" : "Use Monday's choices";
 }
 export function initWeeklyMenu(){
  $("#weekly-monday").value=currentMonday();
@@ -97,9 +99,13 @@ export function initWeeklyMenu(){
   refreshWeeklyMenu().catch(error=>console.error(error));
  });
  $("#weekly-copy-day").addEventListener("click",()=>{
-  if(dayIndex===0)return;
-  if(!confirm("Replace "+days[dayIndex]+"'s selections with Monday's menu?"))return;
-  daysSelected[dayIndex]=new Set(daysSelected[0]);
+  if(dayIndex===0){
+   if(!confirm("Replace Tuesday–Friday with Monday's product selections?"))return;
+   for(let day=1;day<5;day++)daysSelected[day]=new Set(daysSelected[0]);
+  }else{
+   if(!confirm("Replace "+days[dayIndex]+"'s products with Monday's menu?"))return;
+   daysSelected[dayIndex]=new Set(daysSelected[0]);
+  }
   renderProducts();
   setStatus("");
  });
