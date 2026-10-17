@@ -52,6 +52,37 @@
   document.addEventListener("click", (event) => {
     if (![...refs].some(root => root.contains(event.target))) hideMenus();
   });
+  // Shared mobile nav behavior: all pages use the same open/close interaction.
+  for (const toggle of document.querySelectorAll(".ems-header-menu-toggle")) {
+    const nav = document.getElementById(toggle.getAttribute("aria-controls"));
+    if (!nav) continue;
+    // Customer nav is controlled by the storefront script; avoid binding twice.
+    if (toggle.id === "nav-toggle") continue;
+    toggle.addEventListener("click", () => {
+      const open = nav.classList.toggle("is-open");
+      toggle.setAttribute("aria-expanded", String(open));
+      toggle.setAttribute("aria-label", open ? "Close navigation menu" : "Open navigation menu");
+    });
+    nav.addEventListener("click", event => {
+      if (event.target.closest("a")) {
+        nav.classList.remove("is-open");
+        toggle.setAttribute("aria-expanded", "false");
+      }
+    });
+    document.addEventListener("click", event => {
+      if (!nav.contains(event.target) && !toggle.contains(event.target)) {
+        nav.classList.remove("is-open");
+        toggle.setAttribute("aria-expanded", "false");
+      }
+    });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && nav.classList.contains("is-open")) {
+        nav.classList.remove("is-open");
+        toggle.setAttribute("aria-expanded", "false");
+        toggle.focus();
+      }
+    });
+  }
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       const open = [...refs].find(root => !root.querySelector(".ems-account-menu")?.hidden);
@@ -83,8 +114,10 @@
       if (subtitle) subtitle.textContent = signedIn ? (email || "") : "Explore the menu or sign in with Google";
       root.querySelectorAll("[data-signed-in]").forEach(node => node.hidden = !signedIn);
       root.querySelectorAll("[data-signed-out]").forEach(node => node.hidden = signedIn);
-      root.querySelectorAll("[data-manager-access]").forEach(node => node.hidden = !signedIn || !canManage);
-      root.querySelectorAll("[data-customer-orders]").forEach(node => node.hidden = !signedIn);
+      const isWorkspace = document.body.classList.contains("admin-page");
+      root.querySelectorAll("[data-manager-access]").forEach(node => node.hidden = !signedIn || !canManage || isWorkspace);
+      root.querySelectorAll("[data-customer-site]").forEach(node => node.hidden = !signedIn || !isWorkspace);
+      root.querySelectorAll("[data-customer-orders]").forEach(node => node.hidden = !signedIn || isWorkspace);
       root.querySelectorAll("[data-role-label]").forEach(node => node.textContent = displayRole);
     }
     hideMenus();
