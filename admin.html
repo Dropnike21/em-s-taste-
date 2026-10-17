@@ -79,7 +79,7 @@
           <button type="button" role="tab" data-panel="settings-panel" aria-controls="settings-panel" aria-selected="false" class="workspace-nav-item" data-admin-only hidden><span class="nav-symbol" aria-hidden="true">◷</span><span>Ordering controls</span><span class="nav-trailing" aria-hidden="true">›</span></button>
 <button type="button" role="tab" data-panel="insights-panel" aria-controls="insights-panel" aria-selected="false" class="workspace-nav-item" data-admin-only hidden><span class="nav-symbol" aria-hidden="true">◉</span><span>Insights & customers</span><span class="nav-trailing" aria-hidden="true">›</span></button>
 <button type="button" role="tab" data-panel="reports-panel" aria-controls="reports-panel" aria-selected="false" class="workspace-nav-item" data-admin-only hidden><span class="nav-symbol" aria-hidden="true">◇</span><span>Reports & feedback</span><span class="nav-trailing" aria-hidden="true">›</span></button>
-<button type="button" role="tab" data-panel="team-panel" aria-controls="team-panel" aria-selected="false" class="workspace-nav-item" data-admin-only hidden><span class="nav-symbol" aria-hidden="true">♙</span><span>Team permissions</span><span class="nav-trailing" aria-hidden="true">›</span></button>
+<button type="button" role="tab" data-panel="team-panel" aria-controls="team-panel" aria-selected="false" class="workspace-nav-item" data-admin-only hidden><span class="nav-symbol" aria-hidden="true">♙</span><span>Users & roles</span><span class="nav-trailing" aria-hidden="true">›</span></button>
         </div>
       </nav>
       <div class="sidebar-foot">Fresh meals, thoughtful service.<br>Made with care at Em’s Taste.</div>
@@ -201,31 +201,57 @@
             <div id="customer-feedback"><p class="muted">Loading feedback…</p></div>
           </div>
         </div>
-        <div class="admin-card customer-directory">
-          <h3>Customer directory</h3>
-          <p class="muted">Recent 100 customer profiles. Use Block only for demonstrated abuse; blocked accounts cannot submit orders or reviews.</p>
-          <div id="customer-directory"><p class="muted">Loading customers…</p></div>
-        </div>
       </section>
       <section id="team-panel" class="admin-panel" role="tabpanel" hidden>
-        <div class="panel-title"><div><h2>Team access and permissions</h2><p>Assign staff or administrator roles using the member's Firebase Authentication UID. Only administrators can grant these permissions.</p></div></div>
-        <div class="admin-split">
-          <form id="team-form" class="admin-card">
-            <h3>Authorize team member</h3>
-            <label for="member-uid">Firebase user UID *</label><input id="member-uid" required maxlength="128" placeholder="Google user's Firebase UID">
-            <label for="member-label">Member name / label</label><input id="member-label" maxlength="80" placeholder="e.g. Kitchen coordinator">
-            <label for="member-role">Access level *</label><select id="member-role"><option value="staff">Staff — operations only</option><option value="admin">Administrator — all management</option></select>
-            <label class="check-line"><input id="member-active" type="checkbox" checked>Account active</label>
-            <button type="submit" class="button button-primary">Save team access</button>
-            <p class="muted">A member must sign in with Google once to obtain their UID. The original owner record in <code>admins/{uid}</code> remains separately protected.</p>
-          </form>
-          <div class="admin-card">
-            <div class="team-directory-head"><div><h3>Authorized team</h3><p class="muted">Loads on login, then checks for updates every five minutes while this workspace is open.</p></div>
-              <button id="refresh-team" type="button" class="button button-outline">↻ Refresh</button></div>
-            <p id="team-refresh-status" class="team-refresh-status" role="status" aria-live="polite">Loading authorized members…</p>
-            <div id="team-directory"><p class="muted">Loading team…</p></div>
-          </div>
+        <div class="panel-title"><div>
+          <h2>Users & roles</h2>
+          <p>Manage customer, staff, and administrator access in one place. Select a role next to any registered profile.</p>
         </div>
+          <button id="refresh-team" type="button" class="button button-outline">↻ Refresh users</button>
+        </div>
+        <div class="admin-card users-admin-card">
+          <div class="users-summary">
+            <div><span class="users-summary-label">Registered customers</span><strong id="users-total">—</strong></div>
+            <div><span class="users-summary-label">Staff access</span><strong id="users-staff">—</strong></div>
+            <div><span class="users-summary-label">Administrator access</span><strong id="users-admins">—</strong></div>
+          </div>
+          <div class="workspace-filterbar users-filterbar">
+            <label class="workspace-search" for="users-search"><span>Find user by name or email</span>
+              <input id="users-search" type="search" placeholder="Search registered accounts…" autocomplete="off">
+            </label>
+            <label class="workspace-select" for="users-role-filter"><span>Role</span>
+              <select id="users-role-filter">
+                <option value="all">All roles</option>
+                <option value="customer">Customer</option>
+                <option value="staff">Staff</option>
+                <option value="admin">Administrator</option>
+              </select>
+            </label>
+          </div>
+          <p id="team-refresh-status" class="team-refresh-status" role="status" aria-live="polite">Loading registered users…</p>
+          <div id="users-directory" class="users-directory">
+            <p class="muted">Loading registered users…</p>
+          </div>
+          <div class="users-pagination">
+            <p id="users-visible-count" class="muted">No users loaded yet.</p>
+            <button id="users-load-more" type="button" class="button button-outline" hidden>Load more users</button>
+          </div>
+          <p class="form-hint">This list includes website customer profiles and existing team records, not Firebase Authentication-only accounts. Your owner account is protected. Changes to a user's role take effect when permissions are rechecked; ask staff to sign out and sign in again.</p>
+        </div>
+        <details class="admin-card users-advanced">
+          <summary>Advanced: authorize an account without a customer profile</summary>
+          <p class="muted">For staff who previously signed into the admin portal but have not registered on the customer website. Most roles can be assigned directly from the user list above.</p>
+          <form id="team-form">
+            <label for="member-uid">Firebase user UID *</label>
+            <input id="member-uid" required maxlength="128" placeholder="Existing Firebase Authentication UID">
+            <label for="member-label">Member name / label</label>
+            <input id="member-label" maxlength="80" placeholder="Kitchen coordinator">
+            <label for="member-role">Access level *</label>
+            <select id="member-role"><option value="staff">Staff</option><option value="admin">Administrator</option></select>
+            <label class="check-line"><input id="member-active" type="checkbox" checked>Access active</label>
+            <button type="submit" class="button button-primary">Save authorization</button>
+          </form>
+        </details>
       </section>
       <section id="reports-panel" class="admin-panel" role="tabpanel" hidden>
         <div class="panel-title"><div><h2>Customer reports and feature requests</h2><p>Only administrators can read service ratings, bug reports and customer issues. Review and resolve each report.</p></div></div>
