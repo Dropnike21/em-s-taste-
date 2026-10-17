@@ -1,5 +1,5 @@
 import { auth, db } from "./firebase-config.js";
-import { onAuthStateChanged, FacebookAuthProvider, signInWithPopup, signOut, getIdTokenResult } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, getIdTokenResult } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, serverTimestamp, Timestamp, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 const $ = s => document.querySelector(s);
@@ -19,11 +19,11 @@ function showDashboard() { authorized=true; $("#login-view").hidden=true; $("#da
 onAuthStateChanged(auth, async user => {
   if (!user) { showLogin(); return; }
   try {
-    // Require Facebook as the authentication method, not merely a linked provider.
+    // Require Google as the authentication method, not merely a linked provider.
     const token = await getIdTokenResult(user);
-    if (token.claims?.firebase?.sign_in_provider !== "facebook.com") {
+    if (token.claims?.firebase?.sign_in_provider !== "google.com") {
       showLogin();
-      message("This dashboard requires Facebook sign-in. Please continue with Facebook.");
+      message("This dashboard requires Google sign-in. Please continue with Google.");
       await signOut(auth);
       return;
     }
@@ -32,41 +32,41 @@ onAuthStateChanged(auth, async user => {
       showLogin();
       // An admin must manually create this UID in the Firestore allowlist.
       // Show only the currently signed-in person's UID, not other accounts.
-      message("Facebook sign-in succeeded, but access isn't approved yet. Your Firebase UID is: " + user.uid + ". Ask the business owner to approve it in Firestore.");
+      message("Google sign-in succeeded, but access isn't approved yet. Your Firebase UID is: " + user.uid + ". Ask the business owner to approve it in Firestore.");
       await signOut(auth);
       return;
     }
     showDashboard();
-    message("Signed in with Facebook as " + (user.displayName || "authorized administrator") + ".", true);
+    message("Signed in with Google as " + (user.displayName || "authorized administrator") + ".", true);
     await refresh();
   } catch (err) {
     showLogin();
     console.error(err);
-    message("Could not verify access. Make sure the Facebook provider, Firestore, and the published rules are configured.");
+    message("Could not verify access. Make sure the Google provider, Firestore, and the published rules are configured.");
   }
 });
-$("#facebook-login").addEventListener("click", async () => {
-  const button = $("#facebook-login");
+$("#google-login").addEventListener("click", async () => {
+  const button = $("#google-login");
   button.disabled = true;
-  message("Opening Facebook sign-in…");
+  message("Opening Google sign-in…");
   try {
-    const provider = new FacebookAuthProvider();
+    const provider = new GoogleAuthProvider();
     // Popup avoids cross-origin redirect storage issues on GitHub Pages.
     await signInWithPopup(auth, provider);
   } catch (err) {
     console.error(err);
     if (err.code === "auth/popup-closed-by-user" || err.code === "auth/cancelled-popup-request") {
-      message("Facebook sign-in was cancelled.");
+      message("Google sign-in was cancelled.");
     } else if (err.code === "auth/popup-blocked") {
-      message("Your browser blocked the Facebook window. Allow popups for this site, then try again.");
+      message("Your browser blocked the Google window. Allow popups for this site, then try again.");
     } else if (err.code === "auth/operation-not-allowed") {
-      message("Facebook sign-in isn't enabled yet in Firebase Authentication.");
+      message("Google sign-in isn't enabled yet in Firebase Authentication.");
     } else if (err.code === "auth/unauthorized-domain") {
       message("This site domain must be added under Firebase Authentication → Authorized domains.");
     } else if (err.code === "auth/account-exists-with-different-credential") {
-      message("A Firebase account already uses this email with another sign-in method. The owner must link Facebook to that account or authorize the new Facebook UID.");
+      message("A Firebase account already uses this email with another sign-in method. The owner must link Google to that account or authorize the new Google UID.");
     } else {
-      message("Facebook sign-in failed. Check Meta App configuration and Firebase OAuth settings.");
+      message("Google sign-in failed. Check Firebase's Google provider settings and your browser.");
     }
   } finally {
     button.disabled = false;
