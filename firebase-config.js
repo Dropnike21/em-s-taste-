@@ -1,8 +1,8 @@
 // Public Firebase web-app configuration — not a service-account secret.
 // Data access is enforced through Firebase Authentication and Firestore Security Rules.
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
 
 export const firebaseConfig = {
   apiKey: "AIzaSyBouP8Rvr6gtLeU4Aig74tReZyskD2WFyg",
