@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#fcf8f1">
+  <title>Em's Taste | Administration</title>
+  <link rel="icon" type="image/svg+xml" href="logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <header class="admin-header">
+    <div class="shell admin-head-row">
+      <a href="./" class="brand"><img src="logo.svg" alt="" width="46" height="46">
+        <span class="brand-text"><strong>Em’s Taste</strong><small>ADMINISTRATION</small></span></a>
+      <div class="admin-head-actions">
+        <a href="./" class="back-to-site">← View storefront</a>
+        <button type="button" id="sign-out" class="button button-outline" hidden>Sign out</button>
+      </div>
+    </div>
+  </header>
+  <main class="shell admin-main">
+    <div class="admin-banner"><strong>Admin workspace</strong><span>Only authorized Em’s Taste staff can manage menus and review customer order requests.</span></div>
+    <p id="page-message" role="status" class="admin-message" aria-live="polite"></p>
+
+    <section id="login-view" class="login-card" aria-labelledby="login-title">
+      <img src="logo.svg" width="94" height="94" alt="">
+      <p class="section-kicker">WELCOME BACK</p>
+      <h1 id="login-title">Sign in to <em>Em’s Taste</em></h1>
+      <p class="card-intro">Use your authorized administrator email and password.</p>
+      <form id="login-form">
+        <label for="login-email">Email address</label>
+        <input id="login-email" type="email" autocomplete="username" required placeholder="admin@example.com">
+        <label for="login-password">Password</label>
+        <input id="login-password" type="password" autocomplete="current-password" required placeholder="Your password">
+        <button type="submit" id="login-submit" class="button button-primary button-full">Sign in</button>
+      </form>
+      <button id="forgot-password" class="forgot-link" type="button">Forgot password? Send a reset email</button>
+      <p class="form-hint">Administrators are set up privately in Firebase Console. Public account registration is disabled.</p>
+    </section>
+
+    <div id="dashboard-view" hidden>
+      <div class="admin-title-row">
+        <div><p class="section-kicker">YOUR KITCHEN CONTROL CENTER</p><h1>Good morning, <em>team Em’s.</em></h1><p>Manage tomorrow’s menu and keep orders organized in one place.</p></div>
+        <button id="refresh-dashboard" type="button" class="button button-outline">↻ Refresh</button>
+      </div>
+      <div class="stat-row">
+        <div class="stat-card"><span>Menu items</span><strong id="stat-items">0</strong><small>Saved in Firestore</small></div>
+        <div class="stat-card"><span>Pending orders</span><strong id="stat-pending">0</strong><small>Awaiting staff confirmation</small></div>
+        <div class="stat-card"><span>Recorded total</span><strong id="stat-total">₱0.00</strong><small>Requests (not confirmed sales)</small></div>
+      </div>
+      <div class="admin-tabs" role="tablist" aria-label="Dashboard sections">
+        <button type="button" role="tab" aria-controls="menu-panel" aria-selected="true" class="active" data-panel="menu-panel">Menu & pricing</button>
+        <button type="button" role="tab" aria-controls="orders-panel" aria-selected="false" data-panel="orders-panel">Orders</button>
+        <button type="button" role="tab" aria-controls="settings-panel" aria-selected="false" data-panel="settings-panel">Ordering settings</button>
+      </div>
+      <section id="menu-panel" class="admin-panel" role="tabpanel">
+        <div class="panel-title"><div><h2>Today’s recipes, tomorrow’s meals.</h2><p>Create a menu item, set its price, and choose whether it's available.</p></div></div>
+        <div class="admin-split">
+          <form id="dish-form" class="admin-card">
+            <h3 id="dish-form-title">Add a menu item</h3>
+            <input type="hidden" id="dish-id">
+            <label for="dish-name">Dish name *</label><input id="dish-name" maxlength="100" required placeholder="e.g. Pork Adobo">
+            <label for="dish-description">Short description</label><textarea id="dish-description" rows="2" maxlength="220" placeholder="Tell customers what makes it special"></textarea>
+            <div class="two-fields">
+              <div><label for="dish-price">Price (₱) *</label><input id="dish-price" type="number" min="1" max="5000" step="1" required placeholder="85"></div>
+              <div><label for="dish-category">Category</label><select id="dish-category"><option value="ulam">Ulam</option><option value="sides">Rice & extras</option></select></div>
+            </div>
+            <label for="dish-tag">Menu tag</label><input id="dish-tag" maxlength="35" placeholder="e.g. Mama’s favorite">
+            <label for="dish-image">Photo URL (optional)</label><input id="dish-image" type="url" maxlength="500" placeholder="https://.../food-photo.jpg">
+            <label class="check-line"><input type="checkbox" id="dish-available" checked> Available for ordering</label>
+            <div class="form-actions"><button class="button button-primary" id="save-dish" type="submit">Save dish</button><button class="button button-outline" id="cancel-edit" type="button">Clear</button></div>
+          </form>
+          <div class="admin-card"><h3>Saved dishes</h3><div id="admin-dishes" class="admin-dishes"><p class="muted">Loading menu…</p></div></div>
+        </div>
+      </section>
+      <section id="orders-panel" class="admin-panel" role="tabpanel" hidden>
+        <div class="panel-title"><div><h2>Incoming order requests</h2><p>Confirm orders with each customer or workplace coordinator. Updates are visible to staff, not automatically messaged to customers.</p></div><button id="export-csv" class="button button-outline" type="button">Export CSV</button></div>
+        <div id="orders-list" class="admin-orders"><p class="muted">Loading orders…</p></div>
+      </section>
+      <section id="settings-panel" class="admin-panel" role="tabpanel" hidden>
+        <div class="panel-title"><div><h2>Pre-order settings</h2><p>Set the menu’s intended workday and choose whether to accept order requests.</p></div></div>
+        <form id="settings-form" class="admin-card settings-card">
+          <label for="menu-service-date">Menu for workday *</label><input id="menu-service-date" type="date" required>
+          <label class="check-line"><input type="checkbox" id="orders-open"> Allow online order requests</label>
+          <p class="setting-note">Requests are accepted only Sunday–Thursday before 11:00 PM Philippine time for the following workday, even when this switch is enabled. All dishes and prices must be finalized before opening.</p>
+          <button type="submit" class="button button-primary">Save settings</button>
+          <p class="form-hint">The storefront updates on page reload. Orders remain pending until manually confirmed.</p>
+        </form>
+      </section>
+    </div>
+  </main>
+  <footer class="admin-footer">© <span id="year"></span> Em's Taste · Private administration</footer>
+  <script type="module" src="admin.js"></script>
+</body>
+</html>
