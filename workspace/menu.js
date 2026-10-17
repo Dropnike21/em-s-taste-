@@ -1,10 +1,11 @@
 import {db,$,esc,peso,msg} from "./shared.js";
-import {collection,doc,getDocs,setDoc,updateDoc,query,where,limit} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
+import {collection,doc,getDocs,setDoc,updateDoc,runTransaction,query,where,limit} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
 import {FILIPINO_DISHES} from "./filipino-dishes.js";
 
 let dishes=[];
 const byPreset=new Map(FILIPINO_DISHES.map(d=>[d.id,d]));
 export function menuItems(){return dishes.filter(d=>d.archived!==true);}
+export function eligibleProducts(){return menuItems().filter(d=>d.available===true && Number.isInteger(d.price) && d.price>0 && d.configured!==false);}
 const archived=d=>d.archived===true;
 const presetMatch=p=>dishes.find(d=>d.presetId===p.id)||
   dishes.find(d=>d.name?.trim().toLowerCase()===p.name.toLowerCase());
@@ -23,11 +24,15 @@ function render(){
  const filter=$("#dish-list-filter").value;
  const list=dishes.filter(d=>filter==="all"||(filter==="archived"?archived(d):!archived(d)));
  $("#stat-items").textContent=menuItems().length;
+ const drafts=menuItems().filter(d=>d.configured===false || !Number.isInteger(d.price) || d.price<1).length;
+ $("#catalog-seed-status").textContent= drafts
+   ? drafts+" products still need a price and activation before scheduling."
+   : "Catalog ready. Choose meals under Weekly menu to offer them on specific days.";
  $("#admin-dishes").innerHTML=list.map(d=>
    '<div class="admin-dish"><span><strong>'+esc(d.name)+'</strong><small>'+peso(d.price)+
    ' · '+(d.category==="sides"?"Rice & extras":"Ulam")+'</small>'+
    '<small class="availability '+(!d.available||archived(d)?"unavailable":"")+'">'+
-   (archived(d)?"Archived — hidden from customers":d.available?"● Available":"○ Unavailable")+
+   (archived(d)?"Archived":d.configured===false||!d.price?"Draft · set price":d.available?"● Active product":"○ Inactive product")+
    '</small></span><div class="dish-actions"><button type="button" data-edit="'+esc(d.id)+'">Edit</button>'+
    (archived(d)?"":'<button type="button" data-availability="'+esc(d.id)+'">'+(d.available?"Pause":"Make available")+'</button>')+
    '<button type="button" data-archive="'+esc(d.id)+'">'+(archived(d)?"Restore":"Archive")+'</button></div></div>'
@@ -83,6 +88,7 @@ function choose(id){
 }
 export function initMenu(){
  templates();reset();
+ $("#seed-catalog").addEventListener("click",seedCatalog);
  $("#dish-list-filter").addEventListener("change",render);
  $("#dish-template").addEventListener("change",e=>choose(e.target.value));
  $("#custom-dish").addEventListener("click",()=>{
@@ -144,7 +150,7 @@ export function initMenu(){
   const data={
    name,price,category:$("#dish-category").value,description:$("#dish-description").value.trim(),
    tag:$("#dish-tag").value.trim(),available:$("#dish-available").checked&&!archived(previous||{}),
-   archived:archived(previous||{}),palette:"coral"
+   archived:archived(previous||{}),configured:true,palette:"coral"
   };
   if(preset?.id||previous?.presetId)data.presetId=preset?.id||previous.presetId;
   if(image)data.image=image;
@@ -157,6 +163,46 @@ export function initMenu(){
   }catch(error){console.error(error);msg("Could not save this meal. Verify staff permissions.");}
   finally{btn.disabled=false;}
  });
+}
+// Explicit one-time catalog bootstrap: a transaction reads every candidate ID
+// before creating it, and never overwrites existing product documents.
+export async function seedCatalog(){
+ const button=$("#seed-catalog");
+ button.disabled=true;
+ button.textContent="Checking products…";
+ try{
+  await refreshMenu();
+  const missing=FILIPINO_DISHES.filter(p=>!presetMatch(p));
+  if(!missing.length){
+   msg("All 30 starter meals are already represented in your catalog.",true);
+   return;
+  }
+  if(!confirm("Add "+missing.length+" Filipino meals as UNPRICED, INACTIVE product drafts? Your saved meals will not be overwritten."))return;
+  const count=await runTransaction(db,async transaction=>{
+   const entries=missing.map(p=>({p,ref:doc(db,"menu","dish-"+p.id)}));
+   const snaps=await Promise.all(entries.map(({ref})=>transaction.get(ref)));
+   let created=0;
+   for(let i=0;i<entries.length;i++){
+    if(snaps[i].exists())continue;
+    const {p,ref}=entries[i];
+    transaction.set(ref,{
+     name:p.name,description:p.description,category:p.category,
+     tag:p.tag,price:0,available:false,configured:false,
+     archived:false,presetId:p.id,palette:"coral"
+    });
+    created++;
+   }
+   return created;
+  });
+  await refreshMenu();
+  window.dispatchEvent(new Event("ems-workspace-menu-updated"));
+  msg(count+" starter products added as drafts. Set prices and activate products before scheduling.",true);
+ }catch(error){
+  console.error("Catalog setup failed:",error);
+  msg("Unable to add starter products. Check staff permissions and try again.");
+ }finally{
+  button.disabled=false;button.textContent="Add 30 Filipino starter products";
+ }
 }
 export async function refreshSuggestions(){
  const el=$("#staff-menu-suggestions");if(!el)return;
