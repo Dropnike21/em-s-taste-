@@ -377,3 +377,28 @@
  .admin-page .users-pagination{margin-top:10px}
  .workspace-toast{bottom:16px}
 }
+
+
+/* Mobile section chooser floats above workspace rather than pushing it off-screen. */
+@media(max-width:860px){
+ .admin-page .workspace-nav-area{
+   position:fixed;
+   top:clamp(69px,11vh,99px);
+   left:15px;
+   right:15px;
+   z-index:65;
+   max-width:690px;
+   margin:0 auto;
+   padding:13px 12px;
+   max-height:calc(100dvh - 115px);
+   overflow:auto;
+   box-shadow:0 20px 60px #3f241f38;
+   border:1px solid #d8bdaa;
+   background:#fffdf9;
+ }
+ .admin-page .workspace-nav-area.mobile-open{display:block}
+ .admin-page .workspace-nav-item{min-height:43px}
+}
+@media(max-width:570px){
+ .admin-page .workspace-nav-area{left:10px;right:10px;top:72px;max-height:calc(100dvh - 91px)}
+}
