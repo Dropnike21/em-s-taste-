@@ -273,8 +273,8 @@
     $("#customer-signout").hidden = !signedIn;
     $("#customer-refresh").hidden = !signedIn;
     $("#customer-history").hidden = !signedIn;
-    $("#account-shortcut").textContent = signedIn ? "My orders" : "Sign in";
-    $("#customer-heading").textContent = signedIn ? "Hello, " + customer.displayName + "." : "Your meals, your account.";
+    $("#account-shortcut").textContent = signedIn ? "Account" : "Sign in";
+    $("#customer-heading").textContent = signedIn ? "Welcome back, " + customer.displayName + "." : "Your orders, all in one place.";
     $("#customer-status").textContent = live?.accountError ||
       (customer?.blocked ? "Ordering is disabled for this account. Contact Em's Taste for assistance."
         : signedIn ? "Signed in as " + customer.email + ". Review your past requests and meals below."
@@ -320,8 +320,36 @@
   }
 
   function setupEvents() {
+    const navToggle = $("#nav-toggle");
+    const nav = $("#site-navigation");
+    const closeNavigation = () => {
+      nav.classList.remove("is-open");
+      navToggle.setAttribute("aria-expanded", "false");
+      navToggle.setAttribute("aria-label", "Open navigation menu");
+    };
+    navToggle.addEventListener("click", () => {
+      const open = nav.classList.toggle("is-open");
+      navToggle.setAttribute("aria-expanded", String(open));
+      navToggle.setAttribute("aria-label", open ? "Close navigation menu" : "Open navigation menu");
+    });
+    nav.addEventListener("click", e => {
+      const link = e.target.closest("a[href]");
+      if (!link) return;
+      closeNavigation();
+      if (link.getAttribute("href") === "#account-section" && window.EMS_LIVE_STATE?.customer) {
+        $("#orders-details").open = true;
+      }
+    });
+    document.addEventListener("click", e => {
+      if (!nav.contains(e.target) && !navToggle.contains(e.target)) closeNavigation();
+    });
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") closeNavigation();
+    });
     $("#account-shortcut").addEventListener("click", () => {
-      document.querySelector("#account-section").scrollIntoView({behavior:"smooth", block:"start"});
+      if (window.EMS_LIVE_STATE?.customer) $("#orders-details").open = true;
+      $("#account-section").scrollIntoView({behavior:"smooth", block:"start"});
+      closeNavigation();
     });
     $("#customer-google-login").addEventListener("click", customerSignIn);
     $("#cart-google-login").addEventListener("click", async () => {
