@@ -93,6 +93,9 @@
         ? "Requests for " + prettyDate(schedule.serviceDate) + " close at 11:00 PM Philippine time."
         : "Order requests are not open. Next order window: " + prettyDate(schedule.orderWindow) + ".";
     $("#sample-warning").textContent = published ? "Current published menu" : "Sample menu — for preview only";
+    $("#menu-disclaimer").textContent = published
+      ? "* Prices and availability are subject to kitchen confirmation. Menu updates may require a page refresh."
+      : "* This is a sample menu for preview. Published dishes and current prices will appear after setup.";
     updateCheckoutButton();
   }
 
@@ -361,5 +364,16 @@
     }
     updateSchedule();
   });
+  if (window.EMS_LIVE_STATE?.ready) {
+    const loaded = window.EMS_LIVE_STATE;
+    if (loaded.usingLiveMenu) {
+      dishes = window.EMS_MENU;
+      cart = loadCart();
+      saveCart();
+      paintMenu();
+      paintCart();
+    }
+    updateSchedule();
+  }
   window.setInterval(updateSchedule, 30000);
 })();
