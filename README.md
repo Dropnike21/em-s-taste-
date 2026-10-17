@@ -71,7 +71,7 @@ The admin-only **Users & roles** screen combines registered customer profiles fr
 
 **Scope limitation:** A static GitHub Pages site cannot use Firebase Admin SDK to enumerate *every* Firebase Authentication account. Historical Auth-only accounts with **no Firestore customer or team document** will not appear until they next sign into the updated website (or are synchronized by a future trusted Cloud Function). This directory does **not** claim to be a complete export of Firebase Authentication. A manual UID-based advanced form remains for exceptional legacy accounts.
 
-**Security:** All role changes are authorized by Firestore's existing `isAdmin()` rule. The browser never receives a service-account secret or permission to create owner records under `admins`. Existing Firestore rules do not need changes for this UI update.
+**Security:** All role changes are authorized by Firestore's existing `isAdmin()` rule. The browser never receives a service-account secret or permission to create owner records under `admins`. The user-directory feature itself does not require new rules; weekly menu support does, as described above.
 
 ## Architecture and modules
 
@@ -92,6 +92,8 @@ workspace/prep.js           Dish/workplace cooking preparation totals and CSV
 workspace/settings.js       Admin-only global ordering hours / service date settings
 workspace/insights.js       Admin-only recent dishes and verified rating insights
 workspace/people.js         Admin-only customers, blocked users and staff permissions
+workspace/weekly.js         Five-day weekly menu planning and publishing
+workspace/filipino-dishes.js 30 starter meal templates for catalog bootstrap
 workspace/reports.js        Admin-only bug reports and feedback triage
 firebase-config.js          Public Firebase web configuration
 firestore.rules             Server-side access control (MUST DEPLOY SEPARATELY)
@@ -172,7 +174,7 @@ If Google sign-in works on the customer page but staff/admin access is denied, u
 2. Make sure Firestore Database exists, and the owner is approved in \`admins/{uid}\`.
 3. **Replace the entire Firestore Rules editor with [firestore.rules](firestore.rules) and Publish**. Editing this file in GitHub alone **does NOT** publish the database rules. Never set \`allow read, write: if true\`.
 4. GitHub Pages → Settings → Pages → deploy from \`main\` and \`/(root)\`.
-5. Load \`admin.html\` as the owner, test menu and date settings. Staff UIDs are managed from the admin-only Team permissions tab.
+5. Load \`admin.html\` as the owner, test menu and date settings. User roles are managed from the admin-only Users & roles tab.
 6. Test each role's access and denial, on desktop and mobile, *before* allowing real customer orders.
 
 ## Pre-launch security and operations
