@@ -97,6 +97,10 @@ function activateTab(panelId, changeHistory = false) {
   const [title, subtitle] = panelInfo[panelId];
   $("#workspace-page-title").textContent = title;
   $("#workspace-page-desc").textContent = subtitle;
+  document.querySelectorAll('.ems-primary-nav a[href^="#"]').forEach(link => {
+    if (link.getAttribute("href") === "#" + panelId) link.setAttribute("aria-current", "page");
+    else link.removeAttribute("aria-current");
+  });
   if (changeHistory && location.hash !== "#" + panelId) history.pushState({emsPanel:panelId}, "", "#" + panelId);
   closeMobileNav();
   if (panelId === "team-panel" && role === "admin") {
