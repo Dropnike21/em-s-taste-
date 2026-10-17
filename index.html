@@ -14,6 +14,7 @@
   <script src="menu.js" defer></script>
   <script src="app.js" defer></script>
   <script type="module" src="storefront-firebase.js"></script>
+  <script type="module" src="customer/requests.js"></script>
 </head>
 <body>
   <div class="top-strip"><span class="tiny-star">✦</span> HOME-COOKED GOODNESS, MADE FOR YOUR WORKDAY <span class="tiny-star">✦</span></div>
@@ -27,6 +28,7 @@
         <a href="#menu">Our Menu</a>
         <a href="#how-it-works">How it works</a>
         <a href="#story">Our Story</a>
+        <a href="#customer-services">Requests & feedback</a>
       </nav>
       <button id="account-shortcut" class="account-shortcut" type="button" aria-label="Customer account and orders">Sign in</button>
       <button id="open-cart" class="cart-toggle" type="button" aria-controls="cart-drawer" aria-expanded="false">
@@ -99,6 +101,65 @@
           <div id="my-orders" class="my-orders"><p class="muted">Loading your orders…</p></div>
         </div>
         <p class="customer-privacy">We use your Google identity to link your requests to your account and prevent duplicate orders. <a href="privacy.html">How we use your information</a>.</p>
+      </div>
+    </section>
+
+    <section id="customer-services" class="customer-services section-pad">
+      <div class="shell">
+        <p class="section-kicker">WE LISTEN TO OUR CUSTOMERS</p>
+        <h2>Requests, bookings & <em>feedback.</em></h2>
+        <p class="section-desc">Ask Mama Em to cook something new, request a large meal booking, or tell us what we can improve.</p>
+        <p id="services-auth" class="service-auth">Sign in with Google in the account section above to submit a request or report.</p>
+        <div id="customer-service-forms" class="customer-service-grid" hidden>
+          <form id="feedback-form" class="admin-card request-form">
+            <h3>Suggestions and feedback</h3>
+            <p class="muted">For meal ideas, website/service ratings, bugs, issues, or other concerns. Reports are not publicly posted.</p>
+            <label for="feedback-type">Request category</label>
+            <select id="feedback-type" required>
+              <option value="menu_request">Request a meal for the menu</option>
+              <option value="food">Rate food (general feedback)</option>
+              <option value="website">Rate the website</option>
+              <option value="service">Rate our service</option>
+              <option value="bug">Report a website bug</option>
+              <option value="issue">Report a problem or issue</option>
+              <option value="other">Other feedback</option>
+            </select>
+            <label for="feedback-rating">Rating (optional)</label>
+            <select id="feedback-rating">
+              <option value="0">No rating</option>
+              <option value="5">5 / 5 — Excellent</option>
+              <option value="4">4 / 5 — Good</option>
+              <option value="3">3 / 5 — Average</option>
+              <option value="2">2 / 5 — Needs improvement</option>
+              <option value="1">1 / 5 — Poor</option>
+            </select>
+            <label for="feedback-message">Tell us more *</label>
+            <textarea id="feedback-message" minlength="5" maxlength="800" rows="4" required placeholder="Which meal would you like to see, or what happened?"></textarea>
+            <button type="submit" class="button button-primary">Send feedback</button>
+            <p role="status" id="feedback-status"></p>
+            <p class="form-hint">You can submit one entry per category per day. Food ratings from completed purchases are separately available in My orders.</p>
+          </form>
+          <form id="bulk-form" class="admin-card request-form">
+            <h3>Large meal booking — 51+ servings</h3>
+            <p class="muted">For large workplace requests. Submit the number of meals and your preferred date; our staff will review availability and send a quotation. No booking is confirmed automatically.</p>
+            <label for="bulk-date">Requested workday *</label>
+            <input type="date" id="bulk-date" required>
+            <label for="bulk-qty">Number of meals *</label>
+            <input type="number" id="bulk-qty" min="51" max="500" step="1" placeholder="e.g. 60" required>
+            <label for="bulk-workplace">Company / workplace *</label>
+            <input type="text" id="bulk-workplace" minlength="2" maxlength="100" required>
+            <label for="bulk-meals">Meal preferences *</label>
+            <textarea id="bulk-meals" minlength="3" maxlength="400" rows="3" required placeholder="Tell us which dish(es) or meal packages you need."></textarea>
+            <label for="bulk-note">Other details (optional)</label>
+            <textarea id="bulk-note" maxlength="240" rows="2" placeholder="Time, pickup group or other concerns"></textarea>
+            <button type="submit" class="button button-primary">Request staff quotation</button>
+            <p role="status" id="bulk-status"></p>
+          </form>
+        </div>
+        <div id="customer-request-history" class="customer-requests-history" hidden>
+          <h3>Your booking requests and reports</h3>
+          <div id="customer-service-history"><p class="muted">Loading your requests…</p></div>
+        </div>
       </div>
     </section>
 
