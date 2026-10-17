@@ -3,7 +3,7 @@
   const settings = window.EMS_CONFIG || {};
   let dishes = Array.isArray(window.EMS_MENU) ? window.EMS_MENU : [];
   const STORAGE_KEY = "ems-taste-cart-v1";
-  const maxPerDish = 5;
+  const maxPerDish = 50;
   const $ = (selector) => document.querySelector(selector);
   const money = (value) => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(value);
   const html = (value) => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
@@ -180,8 +180,8 @@
   function changeQuantity(id, change) {
     const item = dishes.find(d => d.id === id);
     if (!item || item.available === false) return;
-    if (change > 0 && totalItems() >= 10) {
-      window.alert("For now, orders are limited to ten servings in total.");
+    if (change > 0 && totalItems() >= 50) {
+      window.alert("Regular requests can contain up to 50 servings. For 51 or more, use Large meal booking.");
       return;
     }
     if (change > 0 && !cart[id] && lineItems().length >= 6) {
