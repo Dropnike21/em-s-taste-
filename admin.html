@@ -47,12 +47,14 @@
       <div class="stat-row">
         <div class="stat-card"><span>Menu items</span><strong id="stat-items">0</strong><small>Saved in Firestore</small></div>
         <div class="stat-card"><span>Pending orders</span><strong id="stat-pending">0</strong><small>Awaiting staff confirmation</small></div>
-        <div class="stat-card"><span>Recorded total</span><strong id="stat-total">₱0.00</strong><small>Requests (not confirmed sales)</small></div>
+        <div class="stat-card"><span>Customers</span><strong id="stat-customers">0</strong><small>Registered customer profiles</small></div>
+        <div class="stat-card"><span>Recorded total</span><strong id="stat-total">₱0.00</strong><small>Recent requests, not sales</small></div>
       </div>
       <div class="admin-tabs" role="tablist" aria-label="Dashboard sections">
         <button type="button" role="tab" aria-controls="menu-panel" aria-selected="true" class="active" data-panel="menu-panel">Menu & pricing</button>
         <button type="button" role="tab" aria-controls="orders-panel" aria-selected="false" data-panel="orders-panel">Orders</button>
         <button type="button" role="tab" aria-controls="settings-panel" aria-selected="false" data-panel="settings-panel">Ordering settings</button>
+        <button type="button" role="tab" aria-controls="insights-panel" aria-selected="false" data-panel="insights-panel">Customers & insights</button>
       </div>
       <section id="menu-panel" class="admin-panel" role="tabpanel">
         <div class="panel-title"><div><h2>Today’s recipes, tomorrow’s meals.</h2><p>Create a menu item, set its price, and choose whether it's available.</p></div></div>
@@ -77,6 +79,27 @@
       <section id="orders-panel" class="admin-panel" role="tabpanel" hidden>
         <div class="panel-title"><div><h2>Incoming order requests</h2><p>Confirm orders with each customer or workplace coordinator. Updates are visible to staff, not automatically messaged to customers.</p></div><button id="export-csv" class="button button-outline" type="button">Export CSV</button></div>
         <div id="orders-list" class="admin-orders"><p class="muted">Loading orders…</p></div>
+      </section>
+      <section id="insights-panel" class="admin-panel" role="tabpanel" hidden>
+        <div class="panel-title"><div><h2>Your customers and their feedback</h2><p>Review customer profiles, recent meal preferences and feedback from verified completed orders.</p></div></div>
+        <div class="admin-insight-grid">
+          <div class="admin-card">
+            <h3>Top ordered dishes</h3>
+            <p class="muted">Based on the 100 most recent order requests, excluding cancelled orders.</p>
+            <div id="top-dishes"><p class="muted">Loading…</p></div>
+          </div>
+          <div class="admin-card">
+            <h3>Customer ratings</h3>
+            <div id="rating-average" class="rating-average">—</div>
+            <p class="muted">Based on the 100 most recent private completed-order reviews.</p>
+            <div id="customer-feedback"><p class="muted">Loading feedback…</p></div>
+          </div>
+        </div>
+        <div class="admin-card customer-directory">
+          <h3>Customer directory</h3>
+          <p class="muted">Recent 100 customer profiles. Use Block only for demonstrated abuse; blocked accounts cannot submit orders or reviews.</p>
+          <div id="customer-directory"><p class="muted">Loading customers…</p></div>
+        </div>
       </section>
       <section id="settings-panel" class="admin-panel" role="tabpanel" hidden>
         <div class="panel-title"><div><h2>Pre-order settings</h2><p>Set the menu’s intended workday and choose whether to accept order requests.</p></div></div>
