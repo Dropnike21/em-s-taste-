@@ -269,5 +269,14 @@ window.addEventListener("hashchange", () => {
   if (authorizedPanel(panelId)) activateTab(panelId);
 });
 
+window.addEventListener("ems-workspace-orders-updated", () => {
+  if (!role) return;
+  try { refreshPrep(); } catch (error) { console.error(error); }
+  refreshOverview().catch(error => console.error(error));
+});
+window.addEventListener("ems-workspace-menu-updated", () => {
+  if (role) refreshOverview().catch(error => console.error(error));
+});
+
 initMenu(); initOrders(); initBulk(); initPrep(); initSettings(); initPeople(); initReports();
 $("#year").textContent = String(new Date().getFullYear());
