@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Em's Taste steaming bowl logo">
+  <defs><linearGradient id="b" x1="0" x2="1"><stop stop-color="#b6603a"/><stop offset="1" stop-color="#82402c"/></linearGradient></defs>
+  <path d="M46 45c-15-14 13-26 3-41M64 44C47 26 76 16 65 3M80 46C68 32 87 22 83 12" fill="none" stroke="#c69772" stroke-linecap="round" stroke-width="5"/>
+  <path d="M84 59Q90 38 106 33q-2 19-22 26Zm8 4q18-17 33-13Q115 66 92 63Z" fill="#687455"/>
+  <ellipse cx="64" cy="69" rx="56" ry="13" fill="#f4dbba" stroke="#9e4b32" stroke-width="4"/>
+  <path d="M9 72c6 31 23 45 55 45s49-14 55-45c-29 13-80 13-110 0Z" fill="url(#b)"/>
+  <path d="M21 77q43 12 86 0" stroke="#dbab83" fill="none" stroke-linecap="round" stroke-width="4"/>
+  <path d="M46 119h36" stroke="#793f2a" stroke-linecap="round" stroke-width="5"/>
+</svg>
