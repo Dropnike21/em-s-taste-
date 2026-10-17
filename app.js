@@ -114,21 +114,22 @@
   function paintMenu() {
     const visible = availableDishes();
     $("#menu-count").textContent = visible.length + (visible.length === 1 ? " item" : " items");
+    const previewOnly = !window.EMS_LIVE_STATE?.usingLiveMenu;
     menuGrid.innerHTML = visible.map(item => {
-      const unavailable = item.available === false;
+      const unavailable = previewOnly || item.available === false;
       const image = typeof item.image === "string" && /^(https?:\/\/|\.\.?\/|images\/)/i.test(item.image)
         ? `<img loading="lazy" src="${html(item.image)}" alt="${html(item.name)}">`
         : bowlIcon;
       return `<article class="food-card">
         <div class="food-visual ${["sage", "coral", "cream"].includes(item.palette) ? item.palette : ""}">
-          <span class="food-tag">${html(unavailable ? "Unavailable" : item.tag || "Home-cooked")}</span>${image}
+          <span class="food-tag">${html(previewOnly ? "Example only" : unavailable ? "Unavailable" : item.tag || "Home-cooked")}</span>${image}
         </div>
         <div class="food-content">
           <p class="food-category">${item.category === "sides" ? "Rice & extras" : "Home-cooked ulam"}</p>
           <h3>${html(item.name)}</h3>
           <p class="food-description">${html(item.description)}</p>
           <div class="food-bottom"><span class="price">${money(Number(item.price) || 0)}</span>
-          <button type="button" class="add-button" data-add="${html(item.id)}" ${unavailable ? "disabled" : ""} aria-label="Add ${html(item.name)} to order">${unavailable ? "Sold out" : "+ Add to order"}</button></div>
+          <button type="button" class="add-button" data-add="${html(item.id)}" ${unavailable ? "disabled" : ""} aria-label="${previewOnly ? "Example item only" : "Add " + html(item.name) + " to order"}">${previewOnly ? "Preview only" : unavailable ? "Unavailable" : "+ Add to order"}</button></div>
         </div>
       </article>`;
     }).join("") || '<p class="empty-menu">No items in this category yet.</p>';
@@ -178,6 +179,7 @@
   }
 
   function changeQuantity(id, change) {
+    if (!window.EMS_LIVE_STATE?.usingLiveMenu) return;
     const item = dishes.find(d => d.id === id);
     if (!item || item.available === false) return;
     if (change > 0 && totalItems() >= 50) {
@@ -277,9 +279,9 @@
     $("#customer-heading").textContent = signedIn ? "Welcome back, " + customer.displayName + "." : "Your orders, all in one place.";
     $("#customer-status").textContent = live?.accountError ||
       (customer?.blocked ? "Ordering is disabled for this account. Contact Em's Taste for assistance."
-        : signedIn ? "Signed in as " + customer.email + ". Review your past requests and meals below."
+        : signedIn ? "Signed in as " + customer.email + "."
         : !live?.authReady ? "Checking your sign-in status…"
-        : "Sign in with Google before placing an order. Your past orders and feedback will stay linked to your account.");
+        : "Sign in with Google to request meals and view your orders.");
     if (signedIn) {
       const name = $("#customer-name");
       if (!name.value) name.value = customer.displayName || "";
