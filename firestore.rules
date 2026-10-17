@@ -45,6 +45,17 @@ service cloud.firestore {
     function menuPath(id) {
       return /databases/$(database)/documents/menu/$(id);
     }
+    function menuDayPath(dayKey) {
+      return /databases/$(database)/documents/menuDays/$(dayKey);
+    }
+    // Legacy menus continue working until the kitchen publishes a daily plan.
+    // Once a plan exists, only published dishes assigned to that day are orderable.
+    function allowedForServiceDay(id) {
+      let key = get(storefrontPath()).data.menuDayKey;
+      return !exists(menuDayPath(key)) ||
+        (get(menuDayPath(key)).data.published == true &&
+         get(menuDayPath(key)).data.itemIds.hasAny([id]));
+    }
     function manilaNow() { return request.time + duration.value(8, 'h'); }
     function nextWorkdayDate() {
       return (manilaNow() + duration.value(1, 'd')).date();
@@ -81,7 +92,8 @@ service cloud.firestore {
         exists(menuPath(item.id)) &&
         get(menuPath(item.id)).data.available == true &&
         get(menuPath(item.id)).data.name == item.name &&
-        get(menuPath(item.id)).data.price == item.unitPrice;
+        get(menuPath(item.id)).data.price == item.unitPrice &&
+        allowedForServiceDay(item.id);
     }
     function countItem(item) { return item.quantity; }
     function lineTotal(item) { return item.quantity * item.unitPrice; }
@@ -187,6 +199,217 @@ service cloud.firestore {
     match /menu/{itemId} {
       allow read: if true;
       allow create, update, delete: if isStaff();
+    }
+    // Public readers can see only the published-day records; draft items are
+    // protected by listing control and are never used as orderable products.
+    match /menuDays/{dayKey} {
+      allow get: if true;
+      allow list: if isStaff();
+      allow create, update: if isStaff() &&
+        dayKey.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}
+    match /orders/{orderId} {
+      allow create: if activeCustomer() && orderingEnabled() &&
+        orderId == request.auth.uid + '_' + get(storefrontPath()).data.menuDayKey &&
+        validOrder(request.resource.data);
+      allow get, list: if isStaff() ||
+        (googleUser() && resource.data.customerUid == request.auth.uid);
+      allow update: if isStaff() && safeOrderChange();
+      allow delete: if isAdmin();
+    }
+    // Orders over 50 servings follow a separate quote-and-confirm workflow.
+    match /bulkRequests/{bulkId} {
+      allow create: if activeCustomer() &&
+        request.resource.data.keys().hasAll([
+          'customerUid','customerName','workplace','mealRequest',
+          'servings','requestedDate','serviceDay','note','createdAt','status'
+        ]) &&
+        request.resource.data.keys().hasOnly([
+          'customerUid','customerName','workplace','mealRequest',
+          'servings','requestedDate','serviceDay','note','createdAt','status'
+        ]) &&
+        request.resource.data.customerUid == request.auth.uid &&
+        request.resource.data.customerName is string &&
+        request.resource.data.customerName.size() >= 2 && request.resource.data.customerName.size() <= 80 &&
+        request.resource.data.workplace is string &&
+        request.resource.data.workplace.size() >= 2 && request.resource.data.workplace.size() <= 100 &&
+        request.resource.data.mealRequest is string &&
+        request.resource.data.mealRequest.size() >= 3 && request.resource.data.mealRequest.size() <= 400 &&
+        request.resource.data.note is string && request.resource.data.note.size() <= 240 &&
+        request.resource.data.servings is int &&
+        request.resource.data.servings >= 51 && request.resource.data.servings <= 500 &&
+        request.resource.data.requestedDate is timestamp &&
+        request.resource.data.requestedDate > request.time &&
+        request.resource.data.requestedDate <= request.time + duration.value(90, 'd') &&
+        request.resource.data.requestedDate.dayOfWeek() <= 5 &&
+        request.resource.data.requestedDate.hours() == 0 &&
+        request.resource.data.requestedDate.minutes() == 0 &&
+        request.resource.data.serviceDay is string &&
+        request.resource.data.serviceDay == utcDateKey(request.resource.data.requestedDate) &&
+        bulkId == request.auth.uid + '_' + request.resource.data.serviceDay &&
+        request.resource.data.status == 'pending_confirmation' &&
+        request.resource.data.createdAt == request.time;
+      allow get, list: if isStaff() ||
+        (googleUser() && resource.data.customerUid == request.auth.uid);
+      allow update: if isStaff() && safeBulkChange();
+      allow delete: if isAdmin();
+    }
+    match /reviews/{orderId} {
+      allow create: if activeCustomer() &&
+        exists(orderPath(orderId)) &&
+        get(orderPath(orderId)).data.customerUid == request.auth.uid &&
+        get(orderPath(orderId)).data.status == 'completed' &&
+        request.resource.data.keys().hasAll(['orderId','customerUid','rating','comment','createdAt']) &&
+        request.resource.data.keys().hasOnly(['orderId','customerUid','rating','comment','createdAt']) &&
+        request.resource.data.orderId == orderId &&
+        request.resource.data.customerUid == request.auth.uid &&
+        request.resource.data.rating is int &&
+        request.resource.data.rating >= 1 && request.resource.data.rating <= 5 &&
+        request.resource.data.comment is string &&
+        request.resource.data.comment.size() <= 500 &&
+        request.resource.data.createdAt == request.time;
+      allow get, list: if isAdmin() ||
+        (googleUser() && resource.data.customerUid == request.auth.uid);
+      allow update, delete: if false;
+    }
+    match /feedback/{feedbackId} {
+      allow create: if activeCustomer() &&
+        request.resource.data.keys().hasAll([
+          'customerUid','type','dayKey','rating','message','createdAt','status'
+        ]) &&
+        request.resource.data.keys().hasOnly([
+          'customerUid','type','dayKey','rating','message','createdAt','status'
+        ]) &&
+        request.resource.data.customerUid == request.auth.uid &&
+        request.resource.data.type in
+          ['menu_request','food','website','service','bug','issue','other'] &&
+        request.resource.data.dayKey == dayKeyNow() &&
+        feedbackId == request.auth.uid + '_' +
+          request.resource.data.type + '_' + dayKeyNow() &&
+        request.resource.data.rating is int &&
+        request.resource.data.rating >= 0 && request.resource.data.rating <= 5 &&
+        request.resource.data.message is string &&
+        request.resource.data.message.size() >= 5 &&
+        request.resource.data.message.size() <= 800 &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.status == 'new';
+      allow get, list: if isAdmin() ||
+        (googleUser() && resource.data.customerUid == request.auth.uid) ||
+        (isStaff() && resource.data.type == 'menu_request');
+      allow update: if isAdmin() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','reviewedAt']) &&
+        request.resource.data.status in ['new','reviewing','resolved','closed'] &&
+        request.resource.data.reviewedAt == request.time;
+      allow delete: if isAdmin();
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}) &&
+        request.resource.data.keys().hasAll(['itemIds','published','weekStart','updatedAt']) &&
+        request.resource.data.keys().hasOnly(['itemIds','published','weekStart','updatedAt']) &&
+        request.resource.data.itemIds is list &&
+        request.resource.data.itemIds.size() <= 60 &&
+        request.resource.data.published is bool &&
+        request.resource.data.weekStart is string &&
+        request.resource.data.weekStart.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}
+    match /orders/{orderId} {
+      allow create: if activeCustomer() && orderingEnabled() &&
+        orderId == request.auth.uid + '_' + get(storefrontPath()).data.menuDayKey &&
+        validOrder(request.resource.data);
+      allow get, list: if isStaff() ||
+        (googleUser() && resource.data.customerUid == request.auth.uid);
+      allow update: if isStaff() && safeOrderChange();
+      allow delete: if isAdmin();
+    }
+    // Orders over 50 servings follow a separate quote-and-confirm workflow.
+    match /bulkRequests/{bulkId} {
+      allow create: if activeCustomer() &&
+        request.resource.data.keys().hasAll([
+          'customerUid','customerName','workplace','mealRequest',
+          'servings','requestedDate','serviceDay','note','createdAt','status'
+        ]) &&
+        request.resource.data.keys().hasOnly([
+          'customerUid','customerName','workplace','mealRequest',
+          'servings','requestedDate','serviceDay','note','createdAt','status'
+        ]) &&
+        request.resource.data.customerUid == request.auth.uid &&
+        request.resource.data.customerName is string &&
+        request.resource.data.customerName.size() >= 2 && request.resource.data.customerName.size() <= 80 &&
+        request.resource.data.workplace is string &&
+        request.resource.data.workplace.size() >= 2 && request.resource.data.workplace.size() <= 100 &&
+        request.resource.data.mealRequest is string &&
+        request.resource.data.mealRequest.size() >= 3 && request.resource.data.mealRequest.size() <= 400 &&
+        request.resource.data.note is string && request.resource.data.note.size() <= 240 &&
+        request.resource.data.servings is int &&
+        request.resource.data.servings >= 51 && request.resource.data.servings <= 500 &&
+        request.resource.data.requestedDate is timestamp &&
+        request.resource.data.requestedDate > request.time &&
+        request.resource.data.requestedDate <= request.time + duration.value(90, 'd') &&
+        request.resource.data.requestedDate.dayOfWeek() <= 5 &&
+        request.resource.data.requestedDate.hours() == 0 &&
+        request.resource.data.requestedDate.minutes() == 0 &&
+        request.resource.data.serviceDay is string &&
+        request.resource.data.serviceDay == utcDateKey(request.resource.data.requestedDate) &&
+        bulkId == request.auth.uid + '_' + request.resource.data.serviceDay &&
+        request.resource.data.status == 'pending_confirmation' &&
+        request.resource.data.createdAt == request.time;
+      allow get, list: if isStaff() ||
+        (googleUser() && resource.data.customerUid == request.auth.uid);
+      allow update: if isStaff() && safeBulkChange();
+      allow delete: if isAdmin();
+    }
+    match /reviews/{orderId} {
+      allow create: if activeCustomer() &&
+        exists(orderPath(orderId)) &&
+        get(orderPath(orderId)).data.customerUid == request.auth.uid &&
+        get(orderPath(orderId)).data.status == 'completed' &&
+        request.resource.data.keys().hasAll(['orderId','customerUid','rating','comment','createdAt']) &&
+        request.resource.data.keys().hasOnly(['orderId','customerUid','rating','comment','createdAt']) &&
+        request.resource.data.orderId == orderId &&
+        request.resource.data.customerUid == request.auth.uid &&
+        request.resource.data.rating is int &&
+        request.resource.data.rating >= 1 && request.resource.data.rating <= 5 &&
+        request.resource.data.comment is string &&
+        request.resource.data.comment.size() <= 500 &&
+        request.resource.data.createdAt == request.time;
+      allow get, list: if isAdmin() ||
+        (googleUser() && resource.data.customerUid == request.auth.uid);
+      allow update, delete: if false;
+    }
+    match /feedback/{feedbackId} {
+      allow create: if activeCustomer() &&
+        request.resource.data.keys().hasAll([
+          'customerUid','type','dayKey','rating','message','createdAt','status'
+        ]) &&
+        request.resource.data.keys().hasOnly([
+          'customerUid','type','dayKey','rating','message','createdAt','status'
+        ]) &&
+        request.resource.data.customerUid == request.auth.uid &&
+        request.resource.data.type in
+          ['menu_request','food','website','service','bug','issue','other'] &&
+        request.resource.data.dayKey == dayKeyNow() &&
+        feedbackId == request.auth.uid + '_' +
+          request.resource.data.type + '_' + dayKeyNow() &&
+        request.resource.data.rating is int &&
+        request.resource.data.rating >= 0 && request.resource.data.rating <= 5 &&
+        request.resource.data.message is string &&
+        request.resource.data.message.size() >= 5 &&
+        request.resource.data.message.size() <= 800 &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.status == 'new';
+      allow get, list: if isAdmin() ||
+        (googleUser() && resource.data.customerUid == request.auth.uid) ||
+        (isStaff() && resource.data.type == 'menu_request');
+      allow update: if isAdmin() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','reviewedAt']) &&
+        request.resource.data.status in ['new','reviewing','resolved','closed'] &&
+        request.resource.data.reviewedAt == request.time;
+      allow delete: if isAdmin();
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}) &&
+        request.resource.data.updatedAt == request.time;
+      allow delete: if isAdmin();
     }
     match /orders/{orderId} {
       allow create: if activeCustomer() && orderingEnabled() &&
