@@ -5,6 +5,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
 import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
 import { initMenu, refreshMenu, refreshSuggestions } from "./menu.js";
+import { initWeeklyMenu, refreshWeeklyMenu } from "./weekly.js";
 import { initOrders, refreshOrders } from "./orders.js";
 import { initBulk, refreshBulk } from "./bulk.js";
 import { initPrep, refreshPrep } from "./prep.js";
@@ -15,14 +16,15 @@ import { initReports, refreshReports } from "./reports.js";
 import { refreshOverview } from "./overview.js";
 import { getWorkspaceRole } from "../ui/roles.js";
 
-const staffPanels = new Set(["overview-panel", "orders-panel", "bulk-panel", "prep-panel", "menu-panel"]);
+const staffPanels = new Set(["overview-panel", "orders-panel", "bulk-panel", "prep-panel", "menu-panel", "weekly-panel"]);
 const adminPanels = new Set(["settings-panel", "insights-panel", "reports-panel", "team-panel"]);
 const panelInfo = {
   "overview-panel": ["Overview", "Your kitchen, at a glance."],
   "orders-panel": ["Orders & payments", "Review incoming requests, track payment status, and update fulfillment."],
   "bulk-panel": ["Large meal requests", "Quote and confirm bookings of 51 or more meals."],
   "prep-panel": ["Kitchen preparation", "Organize confirmed servings by dish and workplace."],
-  "menu-panel": ["Menu & products", "Manage food names, descriptions, prices, and availability."],
+  "menu-panel": ["Product catalog", "Edit saved products once, then reuse them in weekly menus."],
+  "weekly-panel": ["Weekly menu", "Plan and publish meals for Monday through Friday."],
   "settings-panel": ["Ordering controls", "Configure the next meal workday and preorder availability."],
   "insights-panel": ["Insights", "Explore orders, meal popularity, and completed-meal ratings."],
   "reports-panel": ["Reports & feedback", "Review customer concerns and resolve reported problems."],
@@ -188,6 +190,9 @@ async function loadAll(force = false) {
       return [tasks[index][0]];
     });
     // Preparation/insights depend on orders, but not on unrelated collections.
+    if (settled[0].status === "fulfilled") {
+      try { await refreshWeeklyMenu(); } catch (error) { console.error(error); errors.push("Weekly menu"); }
+    }
     if (settled[1].status === "fulfilled") {
       try { refreshPrep(); } catch (error) { console.error(error); errors.push("Kitchen prep"); }
       if (role === "admin") {
@@ -375,5 +380,5 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
-initMenu(); initOrders(); initBulk(); initPrep(); initSettings(); initPeople(); initReports();
+initMenu(); initWeeklyMenu(); initOrders(); initBulk(); initPrep(); initSettings(); initPeople(); initReports();
 $("#year").textContent = String(new Date().getFullYear());
