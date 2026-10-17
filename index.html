@@ -28,6 +28,7 @@
         <a href="#how-it-works">How it works</a>
         <a href="#story">Our Story</a>
       </nav>
+      <button id="account-shortcut" class="account-shortcut" type="button" aria-label="Customer account and orders">Sign in</button>
       <button id="open-cart" class="cart-toggle" type="button" aria-controls="cart-drawer" aria-expanded="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 4h2l2 11h11l3-8H6M9 20h.01M17 20h.01" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span class="cart-word">My order</span><span id="cart-count" class="cart-count">0</span>
@@ -79,6 +80,28 @@
       </div>
     </section>
 
+    <section id="account-section" class="customer-section">
+      <div class="shell customer-shell">
+        <div class="customer-account-row">
+          <div>
+            <p class="section-kicker">WELCOME TO EM’S TASTE</p>
+            <h2 id="customer-heading">Your meals, your account.</h2>
+            <p id="customer-status" role="status" aria-live="polite">Sign in with Google to place an order, review past meals, and leave feedback.</p>
+          </div>
+          <div class="customer-actions">
+            <button id="customer-google-login" class="button button-outline" type="button">Continue with Google</button>
+            <button id="customer-refresh" class="button button-outline" type="button" hidden>Refresh my orders</button>
+            <button id="customer-signout" class="button button-outline" type="button" hidden>Sign out</button>
+          </div>
+        </div>
+        <div id="customer-history" hidden>
+          <h3>Your order history</h3>
+          <div id="my-orders" class="my-orders"><p class="muted">Loading your orders…</p></div>
+        </div>
+        <p class="customer-privacy">We use your Google identity to link your requests to your account and prevent duplicate orders. <a href="privacy.html">How we use your information</a>.</p>
+      </div>
+    </section>
+
     <section id="menu" class="menu-section section-pad">
       <div class="shell">
         <div class="section-top">
@@ -114,12 +137,12 @@
     <section class="cta-section"><div class="shell cta-row"><div><p class="section-kicker">YOUR NEXT FAVORITE LUNCH</p><h2>Something good is <em>cooking.</em></h2><p>See what’s on the menu and get your order ready.</p></div><a href="#menu" class="button button-light">Browse today’s options <span aria-hidden="true">↗</span></a></div></section>
   </main>
 
-  <footer class="footer"><div class="shell footer-main"><div class="footer-brand"><span class="footer-title">Em’s Taste</span><span>Lutong Bahay, Gawang May Puso.</span></div><div class="footer-info"><span>Home-cooked meals • Workplace pre-orders</span><span>Sunday–Thursday orders • 11:00 PM PH cutoff</span></div></div><div class="shell footer-bottom"><span>© <span id="year"></span> Em’s Taste.</span><span>Made with care, just like Mama’s cooking. · <a href="admin.html">Staff sign-in</a></span></div></footer>
+  <footer class="footer"><div class="shell footer-main"><div class="footer-brand"><span class="footer-title">Em’s Taste</span><span>Lutong Bahay, Gawang May Puso.</span></div><div class="footer-info"><span>Home-cooked meals • Workplace pre-orders</span><span>Sunday–Thursday orders • 11:00 PM PH cutoff</span></div></div><div class="shell footer-bottom"><span>© <span id="year"></span> Em’s Taste.</span><span>Made with care, just like Mama’s cooking. · <a href="privacy.html">Privacy</a> · <a href="admin.html">Staff sign-in</a></span></div></footer>
 
   <div id="cart-overlay" class="cart-overlay" hidden></div>
   <aside id="cart-drawer" class="cart-drawer" role="dialog" aria-modal="true" aria-labelledby="cart-title" aria-hidden="true" tabindex="-1">
     <div class="drawer-head"><div><p class="section-kicker">YOUR LITTLE FEAST</p><h2 id="cart-title">Your order <span id="drawer-count">(0)</span></h2></div><button class="icon-close" id="close-cart" type="button" aria-label="Close order panel">×</button></div>
-    <div class="drawer-body">
+    <div class="drawer-body"><p id="cart-auth-notice" class="cart-auth-notice" role="status">Sign in with Google to submit an order request.</p>
       <div id="cart-items" class="cart-items"></div>
       <form id="order-form" class="order-form" novalidate>
         <h3>Order details</h3>
@@ -131,7 +154,7 @@
         <textarea id="order-note" name="note" rows="2" maxlength="240" placeholder="Special request? Let us know."></textarea>
       </form>
     </div>
-    <div class="drawer-footer"><div class="total-line"><span>Order total</span><strong id="cart-total">₱0.00</strong></div><p class="cart-meta" id="cart-delivery">Prepared for the next workday</p><button id="prepare-order" form="order-form" type="submit" class="button button-primary button-full">Prepare order summary <span aria-hidden="true">→</span></button><p id="cart-error" role="alert" class="checkout-error"></p><p class="checkout-disclaimer">Online requests are stored for staff review. An order is not final until Em’s Taste confirms it.</p></div>
+    <div class="drawer-footer"><div class="total-line"><span>Order total</span><strong id="cart-total">₱0.00</strong></div><p class="cart-meta" id="cart-delivery">Prepared for the next workday</p><button id="prepare-order" form="order-form" type="submit" class="button button-primary button-full">Prepare order summary <span aria-hidden="true">→</span></button><p id="cart-error" role="alert" class="checkout-error"></p><p class="checkout-disclaimer">Sign-in is required. One request per account per workday, up to 10 servings. Em’s Taste must confirm your order before it is final.</p></div>
   </aside>
 
   <div id="review-overlay" class="review-overlay" hidden>
