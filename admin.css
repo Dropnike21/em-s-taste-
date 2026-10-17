@@ -4,3 +4,21 @@
 .google-login-button:hover:not(:disabled){background:#faf5ef;border-color:#bbac9f;box-shadow:0 8px 22px #55341e19}
 .google-login-button:disabled{opacity:.6}
 .google-mark{display:grid;place-items:center;width:25px;height:25px;background:#f7f5f2;border:1px solid #eee3d8;border-radius:50%;font:bold 16px Arial,sans-serif;color:#4285f4}
+
+/* Customer metrics, private feedback, and profile controls */
+.stat-row{grid-template-columns:repeat(4,minmax(0,1fr))}
+.admin-tabs{flex-wrap:wrap;gap:16px 25px}
+.admin-insight-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.admin-insight-grid .admin-card{height:100%}
+.insight-row{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:10px 0;border-bottom:1px solid var(--line);font-size:12px}
+.insight-row span{white-space:nowrap;color:var(--terracotta)}
+.feedback-line{padding:13px 0;border-bottom:1px solid var(--line);font-size:12px}
+.feedback-line p{margin:5px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;color:#6b5e53}
+.feedback-line small{color:#948678;margin-left:9px}
+.rating-average{font:600 25px var(--heading);color:var(--terracotta);margin-bottom:12px}
+.customer-directory{margin-top:20px}
+.customer-directory-item{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:13px 0;border-bottom:1px solid var(--line)}
+.customer-directory-item strong{font-size:13px;display:block}
+.customer-directory-item small{font-size:11px;color:#807367;display:block;overflow-wrap:anywhere}
+.customer-directory-item .button{min-height:36px;padding:7px 15px}
+@media(max-width:790px){.stat-row{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-insight-grid{grid-template-columns:1fr}.admin-tabs button{padding-bottom:10px}}
