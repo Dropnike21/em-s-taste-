@@ -1,67 +1,73 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function googleUser() {
+      return request.auth != null &&
+        request.auth.token.firebase.sign_in_provider == 'google.com' &&
+        request.auth.token.email_verified == true;
+    }
     function adminPath() {
       return /databases/$(database)/documents/admins/$(request.auth.uid);
     }
     function isAdmin() {
-      return request.auth != null &&
-        request.auth.token.firebase.sign_in_provider == 'google.com' &&
+      return googleUser() &&
         exists(adminPath()) &&
         get(adminPath()).data.active == true;
+    }
+    function customerPath(uid) {
+      return /databases/$(database)/documents/customers/$(uid);
+    }
+    function activeCustomer() {
+      return googleUser() &&
+        exists(customerPath(request.auth.uid)) &&
+        get(customerPath(request.auth.uid)).data.blocked == false;
     }
     function storefrontPath() {
       return /databases/$(database)/documents/settings/storefront;
     }
-    // Rules timestamps are UTC; +8 hours gives the correct Manila local clock.
-    // Firebase dayOfWeek(): Monday=1, ..., Sunday=7.
-    function manilaNow() {
-      return request.time + duration.value(8, 'h');
+    function orderPath(id) {
+      return /databases/$(database)/documents/orders/$(id);
     }
+    function menuPath(id) {
+      return /databases/$(database)/documents/menu/$(id);
+    }
+
+    // Both the clock and permitted service date are checked server-side in PH time.
+    function manilaNow() { return request.time + duration.value(8, 'h'); }
     function nextWorkdayDate() {
       return (manilaNow() + duration.value(1, 'd')).date();
     }
     function validOrderingWindow() {
       let t = manilaNow();
-      return (t.dayOfWeek() == 7 || t.dayOfWeek() <= 4) &&
-        t.hours() < 23;
+      return (t.dayOfWeek() == 7 || t.dayOfWeek() <= 4) && t.hours() < 23;
     }
     function orderingEnabled() {
       return validOrderingWindow() &&
         exists(storefrontPath()) &&
         get(storefrontPath()).data.ordersOpen == true &&
-        get(storefrontPath()).data.menuDate == nextWorkdayDate();
+        get(storefrontPath()).data.menuDate == nextWorkdayDate() &&
+        get(storefrontPath()).data.menuDayKey is string &&
+        get(storefrontPath()).data.menuDayKey.matches('^\d{4}-\d{2}-\d{2}$');
     }
-    function menuPath(id) {
-      return /databases/$(database)/documents/menu/$(id);
-    }
+
     function validItem(item) {
       return item is map &&
-        item.keys().hasAll(['id', 'name', 'quantity', 'unitPrice']) &&
-        item.keys().hasOnly(['id', 'name', 'quantity', 'unitPrice']) &&
-        item.id is string &&
-        item.id.size() > 0 &&
-        item.id.size() <= 60 &&
+        item.keys().hasAll(['id','name','quantity','unitPrice']) &&
+        item.keys().hasOnly(['id','name','quantity','unitPrice']) &&
+        item.id is string && item.id.size() > 0 && item.id.size() <= 60 &&
         item.id.matches('^[a-z0-9-]+$') &&
-        item.name is string &&
-        item.name.size() > 0 &&
-        item.name.size() <= 100 &&
-        item.quantity is int &&
-        item.quantity >= 1 &&
-        item.quantity <= 20 &&
-        item.unitPrice is int &&
-        item.unitPrice >= 1 &&
-        item.unitPrice <= 5000 &&
+        item.name is string && item.name.size() > 0 && item.name.size() <= 100 &&
+        item.quantity is int && item.quantity >= 1 && item.quantity <= 5 &&
+        item.unitPrice is int && item.unitPrice >= 1 && item.unitPrice <= 5000 &&
         exists(menuPath(item.id)) &&
         get(menuPath(item.id)).data.available == true &&
         get(menuPath(item.id)).data.name == item.name &&
         get(menuPath(item.id)).data.price == item.unitPrice;
     }
-    function lineTotal(item) {
-      return item.quantity * item.unitPrice;
-    }
-    // At most 6 order lines so every line is validated independently.
-    // Each order creation uses <= 7 distinct dependent Firestore reads.
+    function countItem(item) { return item.quantity; }
+    function lineTotal(item) { return item.quantity * item.unitPrice; }
+
+    // Firestore rules do not support arbitrary loops; explicitly bound to six lines.
     function validLines(lines) {
       return lines is list && lines.size() >= 1 && lines.size() <= 6 &&
         validItem(lines[0]) &&
@@ -70,6 +76,14 @@ service cloud.firestore {
         (lines.size() < 4 || validItem(lines[3])) &&
         (lines.size() < 5 || validItem(lines[4])) &&
         (lines.size() < 6 || validItem(lines[5]));
+    }
+    function totalUnits(lines) {
+      return countItem(lines[0]) +
+        (lines.size() > 1 ? countItem(lines[1]) : 0) +
+        (lines.size() > 2 ? countItem(lines[2]) : 0) +
+        (lines.size() > 3 ? countItem(lines[3]) : 0) +
+        (lines.size() > 4 ? countItem(lines[4]) : 0) +
+        (lines.size() > 5 ? countItem(lines[5]) : 0);
     }
     function verifiedTotal(lines) {
       return lineTotal(lines[0]) +
@@ -80,8 +94,9 @@ service cloud.firestore {
         (lines.size() > 5 ? lineTotal(lines[5]) : 0);
     }
     function validOrder(order) {
-      return order.keys().hasAll(['customerName', 'workplace', 'note', 'items', 'total', 'serviceDate', 'createdAt', 'status']) &&
-        order.keys().hasOnly(['customerName', 'workplace', 'note', 'items', 'total', 'serviceDate', 'createdAt', 'status']) &&
+      return order.keys().hasAll(['customerUid','customerName','workplace','note','items','total','serviceDate','serviceDay','createdAt','status']) &&
+        order.keys().hasOnly(['customerUid','customerName','workplace','note','items','total','serviceDate','serviceDay','createdAt','status']) &&
+        order.customerUid == request.auth.uid &&
         order.customerName is string &&
         order.customerName.size() >= 2 && order.customerName.size() <= 80 &&
         order.workplace is string &&
@@ -91,38 +106,79 @@ service cloud.firestore {
         order.createdAt == request.time &&
         order.serviceDate is timestamp &&
         order.serviceDate == nextWorkdayDate() &&
+        order.serviceDay == get(storefrontPath()).data.menuDayKey &&
         order.total is int &&
-        order.total > 0 && order.total <= 600000 &&
+        order.total >= 1 && order.total <= 3000 &&
         validLines(order.items) &&
+        totalUnits(order.items) <= 10 &&
         order.total == verifiedTotal(order.items);
     }
 
     match /admins/{uid} {
-      // Create the first admin authorization document using Firebase Console
-      // or a trusted Admin SDK, NEVER from a public website.
-      allow get: if request.auth != null &&
-        request.auth.token.firebase.sign_in_provider == 'google.com' &&
-        request.auth.uid == uid;
+      allow get: if googleUser() && request.auth.uid == uid;
       allow list, create, update, delete: if false;
     }
+
+    match /customers/{uid} {
+      allow create: if googleUser() &&
+        uid == request.auth.uid &&
+        request.resource.data.keys().hasAll(['displayName','email','createdAt','blocked']) &&
+        request.resource.data.keys().hasOnly(['displayName','email','createdAt','blocked']) &&
+        request.resource.data.displayName is string &&
+        request.resource.data.displayName.size() >= 1 &&
+        request.resource.data.displayName.size() <= 80 &&
+        request.resource.data.email == request.auth.token.email &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.blocked == false;
+      allow get: if isAdmin() || (googleUser() && request.auth.uid == uid);
+      allow list: if isAdmin();
+      // Customers cannot self-unblock, change identity, or rewrite joined dates.
+      allow update, delete: if isAdmin();
+    }
+
     match /settings/{settingId} {
       allow get: if settingId == 'storefront' || isAdmin();
       allow list: if isAdmin();
       allow create, update, delete: if isAdmin();
     }
+
     match /menu/{itemId} {
-      allow read: if true; // Public menu contains no private customer data.
+      allow read: if true;
       allow create, update, delete: if isAdmin();
     }
+
     match /orders/{orderId} {
-      // Anyone can REQUEST an order without a customer account during the
-      // Manila window. The admin must confirm it manually after review.
-      // Enable App Check and server-side abuse controls before real launch.
-      allow create: if orderingEnabled() && validOrder(request.resource.data);
-      allow get, list, update, delete: if isAdmin();
+      // Deterministic document ID: UID_YYYY-MM-DD. One request per account,
+      // per configured workday; a second create cannot overwrite that document.
+      allow create: if activeCustomer() &&
+        orderingEnabled() &&
+        orderId == request.auth.uid + '_' + get(storefrontPath()).data.menuDayKey &&
+        validOrder(request.resource.data);
+      // Users can see only their own orders; admin can view all.
+      allow get, list: if isAdmin() ||
+        (googleUser() && resource.data.customerUid == request.auth.uid);
+      allow update, delete: if isAdmin();
     }
-    match /{document=**} {
-      allow read, write: if false;
+
+    match /reviews/{orderId} {
+      allow create: if activeCustomer() &&
+        exists(orderPath(orderId)) &&
+        get(orderPath(orderId)).data.customerUid == request.auth.uid &&
+        get(orderPath(orderId)).data.status == 'completed' &&
+        request.resource.data.keys().hasAll(['orderId','customerUid','rating','comment','createdAt']) &&
+        request.resource.data.keys().hasOnly(['orderId','customerUid','rating','comment','createdAt']) &&
+        request.resource.data.orderId == orderId &&
+        request.resource.data.customerUid == request.auth.uid &&
+        request.resource.data.rating is int &&
+        request.resource.data.rating >= 1 && request.resource.data.rating <= 5 &&
+        request.resource.data.comment is string && request.resource.data.comment.size() <= 500 &&
+        request.resource.data.createdAt == request.time;
+      allow get, list: if isAdmin() ||
+        (googleUser() && resource.data.customerUid == request.auth.uid);
+      // Keep the review tied to the original completed order.
+      allow update, delete: if false;
     }
+
+    match /{document=**} { allow read, write: if false; }
   }
 }
