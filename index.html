@@ -87,7 +87,7 @@
         </div>
         <div class="menu-toolbar"><div id="filters" class="filters" role="group" aria-label="Filter menu"><button type="button" class="filter active" data-category="all" aria-pressed="true">All favorites</button><button type="button" class="filter" data-category="ulam" aria-pressed="false">Ulam</button><button type="button" class="filter" data-category="sides" aria-pressed="false">Rice & extras</button></div><span id="menu-count" class="menu-count"></span></div>
         <div id="menu-grid" class="menu-grid" aria-live="polite"></div>
-        <p class="menu-disclaimer">* Dishes, prices, and availability above are examples until Em’s Taste publishes its official menu. Food photos can be added later.</p>
+        <p id="menu-disclaimer" class="menu-disclaimer">* Sample menu shown for preview. Actual dishes and prices will appear after publication.</p>
       </div>
     </section>
 
@@ -98,7 +98,7 @@
         <div class="steps">
           <article class="step"><span class="step-number">01</span><div class="step-icon" aria-hidden="true">▤</div><h3>Browse the menu</h3><p>See the available meals and choose what you’d like to eat on the next workday.</p></article>
           <article class="step"><span class="step-number">02</span><div class="step-icon" aria-hidden="true">◷</div><h3>Order by 11 PM</h3><p>Finalize your selections before 11:00 PM Philippine time, Sunday to Thursday.</p></article>
-          <article class="step"><span class="step-number">03</span><div class="step-icon" aria-hidden="true">♡</div><h3>Share & confirm</h3><p>Send your order summary to your workplace coordinator and wait for confirmation.</p></article>
+          <article class="step"><span class="step-number">03</span><div class="step-icon" aria-hidden="true">♡</div><h3>Request & confirm</h3><p>Submit your request online and wait for the Em’s Taste team to confirm it.</p></article>
         </div>
         <div class="step-footnote">For now, orders are coordinated through participating workplaces. Independent delivery is not yet available.</div>
       </div>
@@ -114,7 +114,7 @@
     <section class="cta-section"><div class="shell cta-row"><div><p class="section-kicker">YOUR NEXT FAVORITE LUNCH</p><h2>Something good is <em>cooking.</em></h2><p>See what’s on the menu and get your order ready.</p></div><a href="#menu" class="button button-light">Browse today’s options <span aria-hidden="true">↗</span></a></div></section>
   </main>
 
-  <footer class="footer"><div class="shell footer-main"><div class="footer-brand"><span class="footer-title">Em’s Taste</span><span>Lutong Bahay, Gawang May Puso.</span></div><div class="footer-info"><span>Home-cooked meals • Workplace pre-orders</span><span>Sunday–Thursday orders • 11:00 PM PH cutoff</span></div></div><div class="shell footer-bottom"><span>© <span id="year"></span> Em’s Taste.</span><span>Made with care, just like Mama’s cooking.</span></div></footer>
+  <footer class="footer"><div class="shell footer-main"><div class="footer-brand"><span class="footer-title">Em’s Taste</span><span>Lutong Bahay, Gawang May Puso.</span></div><div class="footer-info"><span>Home-cooked meals • Workplace pre-orders</span><span>Sunday–Thursday orders • 11:00 PM PH cutoff</span></div></div><div class="shell footer-bottom"><span>© <span id="year"></span> Em’s Taste.</span><span>Made with care, just like Mama’s cooking. · <a href="admin.html">Staff sign-in</a></span></div></footer>
 
   <div id="cart-overlay" class="cart-overlay" hidden></div>
   <aside id="cart-drawer" class="cart-drawer" role="dialog" aria-modal="true" aria-labelledby="cart-title" aria-hidden="true" tabindex="-1">
@@ -124,9 +124,9 @@
       <form id="order-form" class="order-form" novalidate>
         <h3>Order details</h3>
         <label for="customer-name">Your name <span aria-hidden="true">*</span></label>
-        <input id="customer-name" name="name" type="text" placeholder="e.g. Juan Dela Cruz" maxlength="80" autocomplete="name" required>
+        <input id="customer-name" name="name" minlength="2" type="text" placeholder="e.g. Juan Dela Cruz" maxlength="80" autocomplete="name" required>
         <label for="workplace">Workplace / pickup group <span aria-hidden="true">*</span></label>
-        <input id="workplace" name="workplace" type="text" placeholder="e.g. Company A — Team 2" maxlength="100" required>
+        <input id="workplace" name="workplace" minlength="2" type="text" placeholder="e.g. Company A — Team 2" maxlength="100" required>
         <label for="order-note">Note for your order <span class="optional">(optional)</span></label>
         <textarea id="order-note" name="note" rows="2" maxlength="240" placeholder="Special request? Let us know."></textarea>
       </form>
