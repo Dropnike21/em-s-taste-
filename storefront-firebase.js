@@ -1,4 +1,5 @@
 import { auth, db } from "./firebase-config.js";
+import { getWorkspaceRole } from "./ui/roles.js";
 import {
   GoogleAuthProvider, onAuthStateChanged, signInWithPopup,
   signOut, getIdTokenResult
@@ -10,7 +11,7 @@ import {
 
 const state = {
   ready: false, error: null, settings: null, items: [], usingLiveMenu: false,
-  authReady: false, customer: null, orders: [], reviews: [], accountError: null
+  authReady: false, customer: null, workspaceRole: null, orders: [], reviews: [], accountError: null
 };
 window.EMS_LIVE_STATE = state;
 const notify = () => window.dispatchEvent(new CustomEvent("ems-data"));
@@ -49,6 +50,7 @@ async function refreshMenu() {
 
 async function syncAccount(user) {
   if (!user) {
+    state.workspaceRole = null;
     state.customer = null;
     state.accountError = null;
     state.orders = [];
@@ -80,10 +82,19 @@ async function syncAccount(user) {
       email: snapshot.data().email, blocked: snapshot.data().blocked === true
     };
     state.accountError = null;
+    // Role badges and workspace links are derived from trusted Firestore records.
+    // Failure to read an optional team role must not block normal customer access.
+    try {
+      state.workspaceRole = await getWorkspaceRole(user);
+    } catch (roleError) {
+      console.warn("Could not determine workspace role:", roleError);
+      state.workspaceRole = null;
+    }
     await loadCustomerRecords();
   } catch (error) {
     console.error("Customer account unavailable:", error);
     state.customer = null;
+    state.workspaceRole = null;
     state.accountError = error.message || "Could not load your customer account.";
     state.orders = [];
     state.reviews = [];
