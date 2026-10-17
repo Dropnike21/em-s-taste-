@@ -344,3 +344,8 @@
 @media(max-width:900px){.weekly-preview-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:650px){.weekly-preview-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.weekly-preview-section{padding:45px 0}}
 @media(max-width:385px){.weekly-preview-grid{grid-template-columns:1fr}}
+
+/* Attribution for temporary licensed food photography. */
+.food-photo-credit{display:block;margin:-2px 0 12px;color:#877667;font-size:10px;line-height:1.5;overflow-wrap:anywhere}
+.food-photo-credit a{color:#945137;text-decoration:underline;text-underline-offset:2px}
+.food-photo-credit a:hover{color:#6a321f}
