@@ -37,6 +37,20 @@ function setLoginState(text, error = false) {
   el.textContent = text;
   el.classList.toggle("error", error);
 }
+function clearPrivateViews() {
+  // Remove information from a previous team session, especially on shared devices.
+  for (const id of ["orders-list","bulk-list","prep-summary","reports-list",
+    "customer-feedback","top-dishes","users-directory"]) {
+    const element = $("#" + id);
+    if (element) element.textContent = "";
+  }
+  for (const id of ["stat-pending","stat-bulk","stat-customers","stat-total",
+    "rating-average","users-total","users-staff","users-admins"]) {
+    const element = $("#" + id);
+    if (element) element.textContent = "—";
+  }
+  $("#workspace-email").textContent = "";
+}
 function showLogin() {
   role = null;
   $("#login-view").hidden = false;
@@ -219,6 +233,7 @@ onAuthStateChanged(auth, async user => {
   if (!user) {
     authAttempt += 1;
     clearTeamCache();
+    clearPrivateViews();
     showLogin();
     hideHelp();
     msg("");
@@ -262,9 +277,17 @@ $("#retry-access").addEventListener("click", async () => {
 });
 $("#sign-out").addEventListener("click", async () => {
   $("#sign-out").disabled = true;
-  try { await signOut(auth); }
-  catch (error) { console.error(error); msg("Could not sign out. Please try again."); }
-  finally { $("#sign-out").disabled = false; }
+  try {
+    await signOut(auth);
+    clearTeamCache();
+    clearPrivateViews();
+    // Fully discard privileged UI state from this browser session.
+    window.location.replace("admin.html");
+  } catch (error) {
+    console.error(error);
+    msg("Could not sign out. Please try again.");
+    $("#sign-out").disabled = false;
+  }
 });
 $("#refresh-dashboard").addEventListener("click", () => loadAll(true));
 $("#workspace-mobile-nav").addEventListener("click", () => {
