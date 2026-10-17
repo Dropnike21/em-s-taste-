@@ -1,12 +1,12 @@
 import {db,$,esc,peso,msg} from "./shared.js";
-import {collection,doc,getDocs,setDoc,query,where,limit} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
+import {collection,doc,getDocs,setDoc,updateDoc,query,where,limit} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
 let dishes=[];
 export function menuItems(){return dishes;}
 export async function refreshMenu(){
   const snapshot=await getDocs(collection(db,"menu"));
   dishes=snapshot.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
   $("#stat-items").textContent=dishes.length;
-  $("#admin-dishes").innerHTML=dishes.length?dishes.map(d=>'<div class="admin-dish"><span><strong>'+esc(d.name)+'</strong><small>'+peso(d.price)+' · '+esc(d.category==="sides"?"Rice & extras":"Ulam")+'</small><small class="availability '+(d.available?"":"unavailable")+'">'+(d.available?"● Available":"○ Unavailable")+'</small></span><button type="button" data-edit="'+esc(d.id)+'">Edit</button></div>').join(""):'<p class="muted">No saved dishes yet.</p>';
+  $("#admin-dishes").innerHTML=dishes.length?dishes.map(d=>'<div class="admin-dish"><span><strong>'+esc(d.name)+'</strong><small>'+peso(d.price)+' · '+esc(d.category==="sides"?"Rice & extras":"Ulam")+'</small><small class="availability '+(d.available?"":"unavailable")+'">'+(d.available?"● Available":"○ Unavailable")+'</small></span><div class="dish-actions"><button type="button" data-edit="'+esc(d.id)+'">Edit</button><button type="button" data-toggle-availability="'+esc(d.id)+'">'+(d.available?"Pause":"Make available")+'</button></div></div>').join(""):'<p class="muted">No saved dishes yet.</p>';
 }
 function resetDish(){
   $("#dish-form").reset();$("#dish-id").value="";
@@ -14,7 +14,26 @@ function resetDish(){
 }
 export function initMenu(){
   $("#cancel-edit").addEventListener("click",resetDish);
-  $("#admin-dishes").addEventListener("click",event=>{
+  $("#admin-dishes").addEventListener("click",async event=>{
+    const toggle = event.target.closest("[data-toggle-availability]");
+    if (toggle) {
+      const dish = dishes.find(item => item.id === toggle.dataset.toggleAvailability);
+      if (!dish) return;
+      if (dish.available && !confirm('Pause "' + dish.name + '" for new orders? Existing requests will remain.')) return;
+      const next = !dish.available;
+      toggle.disabled = true;
+      try {
+        await updateDoc(doc(db,"menu",dish.id),{available:next});
+        await refreshMenu();
+        window.dispatchEvent(new Event("ems-workspace-menu-updated"));
+        msg(dish.name+(next?" is available again.":" is now unavailable."),true);
+      } catch (error) {
+        console.error(error);
+        msg("Unable to update meal availability. Check staff permissions.");
+        toggle.disabled = false;
+      }
+      return;
+    }
     const btn=event.target.closest("[data-edit]");if(!btn)return;
     const dish=dishes.find(x=>x.id===btn.dataset.edit);if(!dish)return;
     $("#dish-id").value=dish.id;
@@ -35,9 +54,17 @@ export function initMenu(){
     const id=$("#dish-id").value||((name.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,35)||"dish")+"-"+crypto.randomUUID().slice(0,8));
     const data={name,price,category:$("#dish-category").value,description:$("#dish-description").value.trim(),tag:$("#dish-tag").value.trim(),available:$("#dish-available").checked,palette:"coral"};
     const image=$("#dish-image").value.trim();
-    if(image)data.image=image;
+    if (image) {
+      try {
+        if (new URL(image).protocol !== "https:") throw new Error("Use HTTPS");
+      } catch {
+        msg("Use a secure HTTPS photo URL or leave the image field empty.");
+        return;
+      }
+      data.image = image;
+    }
     $("#save-dish").disabled=true;
-    try{await setDoc(doc(db,"menu",id),data);await refreshMenu();resetDish();msg("Menu item saved.",true);}
+    try{await setDoc(doc(db,"menu",id),data);await refreshMenu();resetDish();window.dispatchEvent(new Event("ems-workspace-menu-updated"));msg("Menu item saved.",true);}
     catch(e){console.error(e);msg("Menu change failed; verify your staff permissions.");}
     finally{$("#save-dish").disabled=false;}
   });
