@@ -134,6 +134,14 @@
         <div class="admin-split">
           <form id="dish-form" class="admin-card">
             <h3 id="dish-form-title">Add a menu item</h3>
+            <p class="muted">Start with one of 30 familiar Filipino dishes, or create your own. Prices and availability are set by your kitchen.</p>
+            <label for="dish-template">Choose a popular Filipino dish</label>
+            <select id="dish-template" aria-describedby="dish-template-help">
+              <option value="">Select a dish to start…</option>
+            </select>
+            <p id="dish-template-help" class="form-hint">Templates do not publish food automatically. Select a dish, set its price, then save.</p>
+            <button id="custom-dish" type="button" class="button button-outline menu-custom-button">+ Create a custom dish</button>
+            <div id="dish-editor" class="dish-editor" hidden>
             <input type="hidden" id="dish-id">
             <label for="dish-name">Dish name *</label><input id="dish-name" maxlength="100" required placeholder="e.g. Pork Adobo">
             <label for="dish-description">Short description</label><textarea id="dish-description" rows="2" maxlength="220" placeholder="Tell customers what makes it special"></textarea>
@@ -145,9 +153,12 @@
             <label for="dish-image">Photo URL (optional)</label><input id="dish-image" type="url" maxlength="500" placeholder="https://.../food-photo.jpg">
             <label class="check-line"><input type="checkbox" id="dish-available" checked> Available for ordering</label>
             <p class="muted">Tip: Use “Available” to pause a dish without deleting it. Changes appear on the customer site after refresh.</p>
-            <div class="form-actions"><button class="button button-primary" id="save-dish" type="submit">Save dish</button><button class="button button-outline" id="cancel-edit" type="button">Clear</button></div>
+            <div class="form-actions"><button class="button button-primary" id="save-dish" type="submit">Save dish</button><button class="button button-outline" id="cancel-edit" type="button">Cancel</button></div>
+            </div>
           </form>
-          <div class="admin-card"><h3>Saved dishes</h3><div id="admin-dishes" class="admin-dishes"><p class="muted">Loading menu…</p></div>
+          <div class="admin-card"><div class="saved-menu-heading"><h3>Saved dishes</h3><label for="dish-list-filter">Show
+            <select id="dish-list-filter"><option value="active">Current menu</option><option value="archived">Archived meals</option><option value="all">All meals</option></select>
+          </label></div><div id="admin-dishes" class="admin-dishes"><p class="muted">Loading menu…</p></div>
             <h3 class="subsection-title">Customer menu suggestions</h3>
             <div id="staff-menu-suggestions"><p class="muted">Loading suggestions…</p></div>
           </div>
@@ -208,7 +219,12 @@
             <button type="submit" class="button button-primary">Save team access</button>
             <p class="muted">A member must sign in with Google once to obtain their UID. The original owner record in <code>admins/{uid}</code> remains separately protected.</p>
           </form>
-          <div class="admin-card"><h3>Authorized team</h3><div id="team-directory"><p class="muted">Loading team…</p></div></div>
+          <div class="admin-card">
+            <div class="team-directory-head"><div><h3>Authorized team</h3><p class="muted">Loads on login, then checks for updates every five minutes while this workspace is open.</p></div>
+              <button id="refresh-team" type="button" class="button button-outline">↻ Refresh</button></div>
+            <p id="team-refresh-status" class="team-refresh-status" role="status" aria-live="polite">Loading authorized members…</p>
+            <div id="team-directory"><p class="muted">Loading team…</p></div>
+          </div>
         </div>
       </section>
       <section id="reports-panel" class="admin-panel" role="tabpanel" hidden>
