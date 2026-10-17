@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fcf8f1">
+  <meta name="description" content="Em's Taste brings freshly prepared Filipino lutong-bahay meals to your workday. Browse our menu and prepare a pre-order.">
+  <title>Em's Taste | Lutong Bahay, Gawang May Puso</title>
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="menu.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="top-strip"><span class="tiny-star">✦</span> HOME-COOKED GOODNESS, MADE FOR YOUR WORKDAY <span class="tiny-star">✦</span></div>
+  <header class="site-header">
+    <div class="shell nav-row">
+      <a class="brand" href="#top" aria-label="Em's Taste homepage">
+        <img src="logo.svg" alt="" width="49" height="49">
+        <span class="brand-text"><strong>Em’s Taste</strong><small>LUTONG BAHAY</small></span>
+      </a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="#menu">Our Menu</a>
+        <a href="#how-it-works">How it works</a>
+        <a href="#story">Our Story</a>
+      </nav>
+      <button id="open-cart" class="cart-toggle" type="button" aria-controls="cart-drawer" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 4h2l2 11h11l3-8H6M9 20h.01M17 20h.01" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="cart-word">My order</span><span id="cart-count" class="cart-count">0</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="shell hero-grid">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="eyebrow-line"></span> A LITTLE TASTE OF HOME</div>
+          <h1>Good food.<br><em>Warm hearts.</em><br>Every workday.</h1>
+          <p class="hero-lead">Comforting Filipino meals, thoughtfully prepared in Emma’s home kitchen. Choose your favorites today, enjoy them on your next workday.</p>
+          <div class="hero-actions">
+            <a href="#menu" class="button button-primary">Explore the menu <span aria-hidden="true">↗</span></a>
+            <a href="#how-it-works" class="text-link">How ordering works <span aria-hidden="true">→</span></a>
+          </div>
+          <div class="hero-divider"></div>
+          <div class="hero-points"><span>✦ Freshly prepared</span><span>✦ Filipino favorites</span><span>✦ Made with care</span></div>
+        </div>
+        <div class="hero-art" aria-label="Stylized steaming bowl illustration">
+          <div class="hero-art-ring"></div>
+          <div class="hero-art-inner">
+            <div class="art-overline">FROM EMMA'S KITCHEN</div>
+            <svg class="hero-bowl" viewBox="0 0 360 250" role="img" aria-label="Steaming bowl with leaves">
+              <defs><linearGradient id="bowl-fill" x1="0" x2="1"><stop stop-color="#ae5635"/><stop offset="1" stop-color="#7d3625"/></linearGradient></defs>
+              <path d="M138 83c-32-26 24-52 0-79M184 89c-36-38 35-62 6-87M226 89c-23-27 21-45 7-68" fill="none" stroke="#c78e69" stroke-width="9" stroke-linecap="round"/>
+              <path d="M239 111q13-51 40-62q-2 41-40 62ZM258 118q33-41 67-33q-19 34-67 33Z" fill="#717658"/>
+              <ellipse cx="178" cy="131" rx="153" ry="29" fill="#f6debf" stroke="#9d4d30" stroke-width="6"/>
+              <path d="M27 136c15 79 62 103 150 103s137-24 154-103c-72 32-234 32-304 0Z" fill="url(#bowl-fill)"/>
+              <path d="M52 147c90 25 158 27 253 0" stroke="#e8bc91" stroke-width="8" fill="none" stroke-linecap="round"/>
+              <path d="M119 243h119" stroke="#713f31" stroke-width="9" stroke-linecap="round"/>
+            </svg>
+            <div class="art-script">lutong bahay</div>
+            <div class="art-caption">Gawang may puso.</div>
+          </div>
+          <span class="art-floating art-floating-top">MADE FRESH ♡</span>
+          <span class="art-floating art-floating-bottom">EST. IN MAMA'S KITCHEN</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="order-notice" aria-labelledby="notice-title">
+      <div class="shell notice-row">
+        <div class="notice-icon" aria-hidden="true">◷</div>
+        <div class="notice-main"><strong id="notice-title">Planning tomorrow’s meal?</strong><span id="schedule-message">Checking the Philippine ordering schedule…</span></div>
+        <span id="schedule-status" class="status-pill" role="status" aria-live="polite">Checking…</span>
+      </div>
+    </section>
+
+    <section id="menu" class="menu-section section-pad">
+      <div class="shell">
+        <div class="section-top">
+          <div><p class="section-kicker">GOOD FOOD, GOOD DAYS</p><h2>What’s cooking <em>at Em’s?</em></h2><p class="section-desc">Pick your cravings, select how many, and prepare your order before the cutoff.</p></div>
+          <div class="menu-date-box"><span>MENU FOR</span><strong id="menu-date">Next workday</strong><small id="sample-warning">Sample menu — for preview only</small></div>
+        </div>
+        <div class="menu-toolbar"><div id="filters" class="filters" role="group" aria-label="Filter menu"><button type="button" class="filter active" data-category="all" aria-pressed="true">All favorites</button><button type="button" class="filter" data-category="ulam" aria-pressed="false">Ulam</button><button type="button" class="filter" data-category="sides" aria-pressed="false">Rice & extras</button></div><span id="menu-count" class="menu-count"></span></div>
+        <div id="menu-grid" class="menu-grid" aria-live="polite"></div>
+        <p class="menu-disclaimer">* Dishes, prices, and availability above are examples until Em’s Taste publishes its official menu. Food photos can be added later.</p>
+      </div>
+    </section>
+
+    <section id="how-it-works" class="steps-section section-pad">
+      <div class="shell">
+        <p class="section-kicker">SIMPLE AS 1, 2, 3</p>
+        <h2>Home-cooked happiness,<br><em>made easy.</em></h2>
+        <div class="steps">
+          <article class="step"><span class="step-number">01</span><div class="step-icon" aria-hidden="true">▤</div><h3>Browse the menu</h3><p>See the available meals and choose what you’d like to eat on the next workday.</p></article>
+          <article class="step"><span class="step-number">02</span><div class="step-icon" aria-hidden="true">◷</div><h3>Order by 11 PM</h3><p>Finalize your selections before 11:00 PM Philippine time, Sunday to Thursday.</p></article>
+          <article class="step"><span class="step-number">03</span><div class="step-icon" aria-hidden="true">♡</div><h3>Share & confirm</h3><p>Send your order summary to your workplace coordinator and wait for confirmation.</p></article>
+        </div>
+        <div class="step-footnote">For now, orders are coordinated through participating workplaces. Independent delivery is not yet available.</div>
+      </div>
+    </section>
+
+    <section id="story" class="story-section">
+      <div class="shell story-grid">
+        <div class="story-mark"><span class="story-mark-inner"><span class="story-script">From Mama’s<br>kitchen</span><img src="logo.svg" width="132" height="132" alt=""><span class="story-seal">A LITTLE EXTRA LOVE IN EVERY DISH</span></span></div>
+        <div class="story-copy"><p class="section-kicker">THE HEART BEHIND THE FOOD</p><h2>Meet the home cook<br>behind <em>Em’s Taste.</em></h2><p>What started with Emma’s love for cooking is becoming something worth sharing. Every meal is a celebration of familiar Filipino flavors, thoughtful preparation, and the simple joy of feeding others.</p><p>We believe that even a busy workday deserves food that feels a little like home.</p><span class="story-signature">Made by Emma, shared with heart.</span></div>
+      </div>
+    </section>
+
+    <section class="cta-section"><div class="shell cta-row"><div><p class="section-kicker">YOUR NEXT FAVORITE LUNCH</p><h2>Something good is <em>cooking.</em></h2><p>See what’s on the menu and get your order ready.</p></div><a href="#menu" class="button button-light">Browse today’s options <span aria-hidden="true">↗</span></a></div></section>
+  </main>
+
+  <footer class="footer"><div class="shell footer-main"><div class="footer-brand"><span class="footer-title">Em’s Taste</span><span>Lutong Bahay, Gawang May Puso.</span></div><div class="footer-info"><span>Home-cooked meals • Workplace pre-orders</span><span>Sunday–Thursday orders • 11:00 PM PH cutoff</span></div></div><div class="shell footer-bottom"><span>© <span id="year"></span> Em’s Taste.</span><span>Made with care, just like Mama’s cooking.</span></div></footer>
+
+  <div id="cart-overlay" class="cart-overlay" hidden></div>
+  <aside id="cart-drawer" class="cart-drawer" role="dialog" aria-modal="true" aria-labelledby="cart-title" aria-hidden="true" tabindex="-1">
+    <div class="drawer-head"><div><p class="section-kicker">YOUR LITTLE FEAST</p><h2 id="cart-title">Your order <span id="drawer-count">(0)</span></h2></div><button class="icon-close" id="close-cart" type="button" aria-label="Close order panel">×</button></div>
+    <div class="drawer-body">
+      <div id="cart-items" class="cart-items"></div>
+      <form id="order-form" class="order-form" novalidate>
+        <h3>Order details</h3>
+        <label for="customer-name">Your name <span aria-hidden="true">*</span></label>
+        <input id="customer-name" name="name" type="text" placeholder="e.g. Juan Dela Cruz" maxlength="80" autocomplete="name" required>
+        <label for="workplace">Workplace / pickup group <span aria-hidden="true">*</span></label>
+        <input id="workplace" name="workplace" type="text" placeholder="e.g. Company A — Team 2" maxlength="100" required>
+        <label for="order-note">Note for your order <span class="optional">(optional)</span></label>
+        <textarea id="order-note" name="note" rows="2" maxlength="240" placeholder="Special request? Let us know."></textarea>
+      </form>
+    </div>
+    <div class="drawer-footer"><div class="total-line"><span>Order total</span><strong id="cart-total">₱0.00</strong></div><p class="cart-meta" id="cart-delivery">Prepared for the next workday</p><button id="prepare-order" form="order-form" type="submit" class="button button-primary button-full">Prepare order summary <span aria-hidden="true">→</span></button><p class="checkout-disclaimer">This version does not submit orders online. You’ll need to share the summary with your coordinator for confirmation.</p></div>
+  </aside>
+
+  <div id="review-overlay" class="review-overlay" hidden>
+    <div class="review-dialog" role="dialog" aria-modal="true" aria-labelledby="review-title" tabindex="-1">
+      <button id="close-review" type="button" class="icon-close review-close" aria-label="Close order summary">×</button>
+      <div class="review-check">✓</div><p class="section-kicker">READY TO SEND</p><h2 id="review-title">Your order summary</h2>
+      <p>This is not yet a confirmed order. Copy or share the details with your workplace coordinator, then wait for their confirmation.</p>
+      <pre id="order-summary" class="order-summary"></pre>
+      <div class="review-actions"><button id="copy-order" class="button button-primary" type="button">Copy order details</button><button id="share-order" class="button button-outline" type="button">Share order</button></div>
+      <p id="share-feedback" role="status" aria-live="polite" class="share-feedback"></p>
+    </div>
+  </div>
+</body>
+</html>
