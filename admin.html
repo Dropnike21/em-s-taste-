@@ -144,6 +144,7 @@
             <label for="dish-tag">Menu tag</label><input id="dish-tag" maxlength="35" placeholder="e.g. Mama’s favorite">
             <label for="dish-image">Photo URL (optional)</label><input id="dish-image" type="url" maxlength="500" placeholder="https://.../food-photo.jpg">
             <label class="check-line"><input type="checkbox" id="dish-available" checked> Available for ordering</label>
+            <p class="muted">Tip: Use “Available” to pause a dish without deleting it. Changes appear on the customer site after refresh.</p>
             <div class="form-actions"><button class="button button-primary" id="save-dish" type="submit">Save dish</button><button class="button button-outline" id="cancel-edit" type="button">Clear</button></div>
           </form>
           <div class="admin-card"><h3>Saved dishes</h3><div id="admin-dishes" class="admin-dishes"><p class="muted">Loading menu…</p></div>
@@ -164,6 +165,14 @@
       </section>
       <section id="orders-panel" class="admin-panel" role="tabpanel" hidden>
         <div class="panel-title"><div><h2>Incoming order requests</h2><p>Confirm orders with each customer or workplace coordinator. Updates are visible to staff, not automatically messaged to customers.</p></div><button id="export-csv" class="button button-outline" type="button">Export CSV</button></div>
+        <div class="workspace-filterbar">
+          <label class="workspace-search" for="order-search"><span>Search orders</span>
+            <input id="order-search" type="search" placeholder="Customer, workplace or dish…" autocomplete="off"></label>
+          <label class="workspace-select" for="order-filter"><span>Status</span>
+            <select id="order-filter"><option value="all">All statuses</option><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></label>
+          <span id="orders-visible-count" class="filter-result">Showing recent requests</span>
+        </div>
+        <div class="orders-workflow-hint"><strong>Recommended flow:</strong> Pending → Confirmed → Completed. Mark cancellations separately. Record payments only after verifying them.</div>
         <div id="orders-list" class="admin-orders"><p class="muted">Loading orders…</p></div>
       </section>
       <section id="insights-panel" class="admin-panel" role="tabpanel" hidden>
