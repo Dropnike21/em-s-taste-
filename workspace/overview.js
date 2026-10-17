@@ -1,6 +1,6 @@
 import { db, $, msg, dateNext } from "./shared.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
-import { menuItems } from "./menu.js";
+import { eligibleProducts } from "./menu.js";
 
 function philippinesTime() {
   const parts = Object.fromEntries(
@@ -29,13 +29,18 @@ export async function refreshOverview() {
       const { hour, weekday } = philippinesTime();
       const eligible = ["Sun", "Mon", "Tue", "Wed", "Thu"].includes(weekday) && hour < 23;
       const correctDay = menuDate === dateNext();
-      const availableCount = menuItems().filter(item => item.available === true).length;
-      const available = Boolean(settings.ordersOpen && correctDay && eligible && availableCount > 0);
+      const active = eligibleProducts();
+      const planned = menuDate ? await getDoc(doc(db,"menuDays",menuDate)) : null;
+      const count = planned?.exists() ?
+        (planned.data().published ?
+          active.filter(item=>(planned.data().itemIds||[]).includes(item.id)).length : 0) :
+        active.length;
+      const available = Boolean(settings.ordersOpen && correctDay && eligible && count > 0);
       state.textContent = available ? "Online pre-orders open" :
         settings.ordersOpen ? "Ordering paused by schedule" : "Online pre-orders closed";
       state.classList.toggle("open", available);
       workday.textContent = "Configured meal date: " + (menuDate || "Not set") +
-        " · " + menuItems().filter(item => item.available === true).length + " available menu items";
+        " · " + count + " scheduled meals";
     }
     sync.textContent = "Updated " + new Intl.DateTimeFormat("en-PH", {
       timeZone: "Asia/Manila", hour: "numeric", minute: "2-digit", hour12: true
