@@ -3,7 +3,7 @@
   const settings = window.EMS_CONFIG || {};
   let dishes = Array.isArray(window.EMS_MENU) ? window.EMS_MENU : [];
   const STORAGE_KEY = "ems-taste-cart-v1";
-  const maxPerDish = 20;
+  const maxPerDish = 5;
   const $ = (selector) => document.querySelector(selector);
   const money = (value) => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(value);
   const html = (value) => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
@@ -74,7 +74,7 @@
     const live = window.EMS_LIVE_STATE;
     if (!live?.ready || live.error || !live.usingLiveMenu || !live.settings?.ordersOpen || !schedule.open) return false;
     const published = live.settings.menuDate?.toDate?.();
-    return published instanceof Date && published.toISOString().slice(0, 10) === schedule.serviceDate.toISOString().slice(0, 10);
+    return published instanceof Date && published.toISOString().slice(0, 10) === schedule.serviceDate.toISOString().slice(0, 10) && live.settings.menuDayKey === schedule.serviceDate.toISOString().slice(0, 10);
   }
 
   function updateSchedule() {
@@ -147,10 +147,18 @@
   function updateCheckoutButton() {
     const button = $("#prepare-order");
     const open = acceptingOrders();
-    button.disabled = !totalItems() || !open || button.dataset.submitting === "yes";
-    button.innerHTML = open
-      ? "Send order request <span aria-hidden='true'>→</span>"
-      : "Online requests unavailable";
+    const signedIn = Boolean(window.EMS_LIVE_STATE?.customer?.uid && !window.EMS_LIVE_STATE.customer.blocked);
+    button.disabled = !totalItems() || !open || !signedIn || button.dataset.submitting === "yes";
+    button.innerHTML = !open
+      ? "Online requests unavailable"
+      : signedIn ? "Send order request <span aria-hidden='true'>→</span>" : "Sign in with Google first";
+    $("#cart-google-login").hidden = signedIn;
+    $("#cart-auth-notice").hidden = signedIn;
+    if (!signedIn) {
+      $("#cart-auth-notice").textContent = window.EMS_LIVE_STATE?.customer?.blocked
+        ? "This account cannot place orders. Contact Em's Taste if you believe this is a mistake."
+        : "Sign in with Google to request a meal. One request per account per workday.";
+    }
   }
 
   function paintCart() {
@@ -172,6 +180,10 @@
   function changeQuantity(id, change) {
     const item = dishes.find(d => d.id === id);
     if (!item || item.available === false) return;
+    if (change > 0 && totalItems() >= 10) {
+      window.alert("For now, orders are limited to ten servings in total.");
+      return;
+    }
     if (change > 0 && !cart[id] && lineItems().length >= 6) {
       window.alert("You can select up to six different dishes per order.");
       return;
@@ -247,13 +259,98 @@
         if (!document.execCommand("copy")) throw new Error("Copy was blocked");
         helper.remove();
       }
-      feedback.textContent = "Copied! Send this message to your coordinator to request confirmation.";
+      feedback.textContent = "Order details copied, including the reference number.";
     } catch {
       feedback.textContent = "Copy unavailable. Select and copy the order details shown above.";
     }
   }
 
+  function renderCustomer() {
+    const live = window.EMS_LIVE_STATE;
+    const customer = live?.customer;
+    const signedIn = Boolean(customer);
+    $("#customer-google-login").hidden = signedIn;
+    $("#customer-signout").hidden = !signedIn;
+    $("#customer-refresh").hidden = !signedIn;
+    $("#customer-history").hidden = !signedIn;
+    $("#account-shortcut").textContent = signedIn ? "My orders" : "Sign in";
+    $("#customer-heading").textContent = signedIn ? "Hello, " + customer.displayName + "." : "Your meals, your account.";
+    $("#customer-status").textContent = live?.accountError ||
+      (customer?.blocked ? "Ordering is disabled for this account. Contact Em's Taste for assistance."
+        : signedIn ? "Signed in as " + customer.email + ". Review your past requests and meals below."
+        : !live?.authReady ? "Checking your sign-in status…"
+        : "Sign in with Google before placing an order. Your past orders and feedback will stay linked to your account.");
+    if (signedIn) {
+      const name = $("#customer-name");
+      if (!name.value) name.value = customer.displayName || "";
+      const reviews = new Set((live.reviews || []).map(x => x.id));
+      $("#my-orders").innerHTML = (live.orders || []).length
+        ? live.orders.map(order => {
+            const date = order.serviceDate?.toDate?.()?.toLocaleDateString("en-PH", {timeZone:"UTC",weekday:"short",month:"short",day:"numeric",year:"numeric"}) || order.serviceDay || "";
+            const reviewed = reviews.has(order.id);
+            const canReview = order.status === "completed" && !reviewed && !customer.blocked;
+            return '<article class="my-order-card"><h4>Meals for ' + html(date) +
+              '</h4><small>Order #' + html(order.id.slice(-17)) + '</small>' +
+              '<p><span class="order-status ' + html(order.status) + '">' + html(order.status) + '</span> · ' + money(order.total) + '</p>' +
+              '<p>' + (order.items || []).map(item => html(item.quantity) + ' × ' + html(item.name)).join(' · ') + '</p>' +
+              (reviewed ? '<p class="my-review-notice">✓ Thanks for sharing your feedback.</p>' : '') +
+              (canReview ? '<form class="my-review-form" data-review-id="' + html(order.id) + '">' +
+                '<label>How was your meal? (required)</label><select name="rating" required><option value="">Choose a rating</option><option value="5">★★★★★ – Excellent</option><option value="4">★★★★ – Good</option><option value="3">★★★ – Okay</option><option value="2">★★ – Needs improvement</option><option value="1">★ – Poor</option></select>' +
+                '<label>Comments (optional)</label><textarea name="comment" maxlength="500" rows="2" placeholder="Tell us what you enjoyed or what to improve."></textarea>' +
+                '<button type="submit" class="button button-primary">Send feedback</button><p role="status" class="my-review-notice"></p></form>' : '') +
+              '</article>';
+          }).join("")
+        : '<p class="muted">No orders yet. Your requests will appear here after you submit them.</p>';
+    }
+    updateCheckoutButton();
+  }
+
+  async function customerSignIn() {
+    $("#customer-status").textContent = "Opening Google sign-in…";
+    try {
+      await window.EMS_GOOGLE_SIGNIN();
+    } catch (err) {
+      console.error(err);
+      $("#customer-status").textContent = err.code === "auth/popup-closed-by-user"
+        ? "Sign-in was cancelled."
+        : err.code === "auth/popup-blocked"
+        ? "Your browser blocked the sign-in popup. Please enable popups or use a normal browser."
+        : "Unable to sign in with Google. Check your browser and Firebase Authentication settings.";
+    }
+  }
+
   function setupEvents() {
+    $("#account-shortcut").addEventListener("click", () => {
+      document.querySelector("#account-section").scrollIntoView({behavior:"smooth", block:"start"});
+    });
+    $("#customer-google-login").addEventListener("click", customerSignIn);
+    $("#cart-google-login").addEventListener("click", async () => {
+      closeCart(false);
+      document.querySelector("#account-section").scrollIntoView({behavior:"smooth", block:"start"});
+      await customerSignIn();
+    });
+    $("#customer-signout").addEventListener("click", () => window.EMS_SIGNOUT());
+    $("#customer-refresh").addEventListener("click", () => window.EMS_ACCOUNT_REFRESH());
+    $("#my-orders").addEventListener("submit", async event => {
+      const form = event.target.closest("[data-review-id]");
+      if (!form) return;
+      event.preventDefault();
+      const button = form.querySelector('button[type="submit"]');
+      const status = form.querySelector('[role="status"]');
+      button.disabled = true;
+      status.textContent = "Sending feedback…";
+      try {
+        await window.EMS_REVIEW_SUBMIT({
+          orderId: form.dataset.reviewId,
+          rating: Number(form.elements.rating.value),
+          comment: form.elements.comment.value.trim()
+        });
+        status.textContent = "Thank you for your feedback.";
+      } catch (err) {
+        status.textContent = err?.message || "Unable to save feedback. Please try again.";
+        button.disabled = false;
+      }
+    });
     $("#open-cart").addEventListener("click", openCart);
     $("#close-cart").addEventListener("click", () => closeCart());
     cartOverlay.addEventListener("click", () => closeCart());
@@ -293,6 +390,11 @@
       updateSchedule();
       const feedback = $("#cart-error");
       feedback.textContent = "";
+      const customer = window.EMS_LIVE_STATE?.customer;
+      if (!customer || customer.blocked) {
+        feedback.textContent = "Sign in with a valid Google customer account before ordering.";
+        return;
+      }
       if (!acceptingOrders()) {
         feedback.textContent = "Online ordering is not active for this workday.";
         return;
@@ -363,6 +465,7 @@
       paintCart();
     }
     updateSchedule();
+    renderCustomer();
   });
   if (window.EMS_LIVE_STATE?.ready) {
     const loaded = window.EMS_LIVE_STATE;
@@ -375,5 +478,6 @@
     }
     updateSchedule();
   }
+  renderCustomer();
   window.setInterval(updateSchedule, 30000);
 })();
