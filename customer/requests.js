@@ -44,7 +44,7 @@ function updateVisibility(){
  $("#services-auth").hidden=!!current;
  $("#services-auth").innerHTML=window.EMS_LIVE_STATE?.customer?.blocked
   ?"Requests are disabled for this account. Contact Em's Taste for assistance."
-  :'<a href="#account-section">Sign in with Google</a> to send requests or feedback.';
+  :'<a href="#welcome-gate" data-show-login>Sign in with Google</a> to send requests or feedback.';
  if(current && loadedUid!==current.uid && !loading){
   loadHistory();
  }
