@@ -1,25 +1,39 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Role checks are enforced by Firestore. Hiding a tab is not authorization.
     function googleUser() {
       return request.auth != null &&
         request.auth.token.firebase.sign_in_provider == 'google.com' &&
         request.auth.token.email_verified == true;
     }
-    function adminPath() {
+    function ownerPath() {
       return /databases/$(database)/documents/admins/$(request.auth.uid);
     }
+    function teamPath(uid) {
+      return /databases/$(database)/documents/team/$(uid);
+    }
+    function isOwner() {
+      return googleUser() && exists(ownerPath()) &&
+        get(ownerPath()).data.active == true;
+    }
+    function teamActive() {
+      return googleUser() && exists(teamPath(request.auth.uid)) &&
+        get(teamPath(request.auth.uid)).data.active == true;
+    }
     function isAdmin() {
-      return googleUser() &&
-        exists(adminPath()) &&
-        get(adminPath()).data.active == true;
+      return isOwner() || (teamActive() &&
+        get(teamPath(request.auth.uid)).data.role == 'admin');
+    }
+    function isStaff() {
+      return isAdmin() || (teamActive() &&
+        get(teamPath(request.auth.uid)).data.role == 'staff');
     }
     function customerPath(uid) {
       return /databases/$(database)/documents/customers/$(uid);
     }
     function activeCustomer() {
-      return googleUser() &&
-        exists(customerPath(request.auth.uid)) &&
+      return googleUser() && exists(customerPath(request.auth.uid)) &&
         get(customerPath(request.auth.uid)).data.blocked == false;
     }
     function storefrontPath() {
@@ -31,25 +45,25 @@ service cloud.firestore {
     function menuPath(id) {
       return /databases/$(database)/documents/menu/$(id);
     }
-
-    // Both the clock and permitted service date are checked server-side in PH time.
     function manilaNow() { return request.time + duration.value(8, 'h'); }
     function nextWorkdayDate() {
       return (manilaNow() + duration.value(1, 'd')).date();
+    }
+    function dayKeyNow() {
+      let t = manilaNow();
+      return string(t.year()) + '-' + string(t.month()) + '-' + string(t.day());
     }
     function validOrderingWindow() {
       let t = manilaNow();
       return (t.dayOfWeek() == 7 || t.dayOfWeek() <= 4) && t.hours() < 23;
     }
     function orderingEnabled() {
-      return validOrderingWindow() &&
-        exists(storefrontPath()) &&
+      return validOrderingWindow() && exists(storefrontPath()) &&
         get(storefrontPath()).data.ordersOpen == true &&
         get(storefrontPath()).data.menuDate == nextWorkdayDate() &&
         get(storefrontPath()).data.menuDayKey is string &&
         get(storefrontPath()).data.menuDayKey.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
     }
-
     function validItem(item) {
       return item is map &&
         item.keys().hasAll(['id','name','quantity','unitPrice']) &&
@@ -66,8 +80,6 @@ service cloud.firestore {
     }
     function countItem(item) { return item.quantity; }
     function lineTotal(item) { return item.quantity * item.unitPrice; }
-
-    // Firestore rules do not support arbitrary loops; explicitly bound to six lines.
     function validLines(lines) {
       return lines is list && lines.size() >= 1 && lines.size() <= 6 &&
         validItem(lines[0]) &&
@@ -93,35 +105,64 @@ service cloud.firestore {
         (lines.size() > 4 ? lineTotal(lines[4]) : 0) +
         (lines.size() > 5 ? lineTotal(lines[5]) : 0);
     }
-    function validOrder(orderData) {
-      return orderData.keys().hasAll(['customerUid','customerName','workplace','note','items','total','serviceDate','serviceDay','createdAt','status']) &&
-        orderData.keys().hasOnly(['customerUid','customerName','workplace','note','items','total','serviceDate','serviceDay','createdAt','status']) &&
-        orderData.customerUid == request.auth.uid &&
-        orderData.customerName is string &&
-        orderData.customerName.size() >= 2 && orderData.customerName.size() <= 80 &&
-        orderData.workplace is string &&
-        orderData.workplace.size() >= 2 && orderData.workplace.size() <= 100 &&
-        orderData.note is string && orderData.note.size() <= 240 &&
-        orderData.status == 'pending' &&
-        orderData.createdAt == request.time &&
-        orderData.serviceDate is timestamp &&
-        orderData.serviceDate == nextWorkdayDate() &&
-        orderData.serviceDay == get(storefrontPath()).data.menuDayKey &&
-        orderData.total is int &&
-        orderData.total >= 1 && orderData.total <= 3000 &&
-        validLines(orderData.items) &&
-        totalUnits(orderData.items) <= 10 &&
-        orderData.total == verifiedTotal(orderData.items);
+    function validOrder(data) {
+      return data.keys().hasAll(['customerUid','customerName','workplace','note','items','total','serviceDate','serviceDay','createdAt','status']) &&
+        data.keys().hasOnly(['customerUid','customerName','workplace','note','items','total','serviceDate','serviceDay','createdAt','status']) &&
+        data.customerUid == request.auth.uid &&
+        data.customerName is string &&
+        data.customerName.size() >= 2 && data.customerName.size() <= 80 &&
+        data.workplace is string &&
+        data.workplace.size() >= 2 && data.workplace.size() <= 100 &&
+        data.note is string && data.note.size() <= 240 &&
+        data.status == 'pending' && data.createdAt == request.time &&
+        data.serviceDate is timestamp && data.serviceDate == nextWorkdayDate() &&
+        data.serviceDay == get(storefrontPath()).data.menuDayKey &&
+        data.total is int && data.total >= 1 && data.total <= 3000 &&
+        validLines(data.items) && totalUnits(data.items) <= 10 &&
+        data.total == verifiedTotal(data.items);
+    }
+    function safeOrderChange() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status','paymentStatus','reviewedAt']) &&
+        request.resource.data.status in ['pending','confirmed','completed','cancelled'] &&
+        (!('paymentStatus' in request.resource.data) ||
+          request.resource.data.paymentStatus in ['unpaid','paid','refunded']) &&
+        request.resource.data.reviewedAt == request.time;
+    }
+    function safeBulkChange() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status','quotedTotal','paymentStatus','updatedAt']) &&
+        request.resource.data.status in ['pending_confirmation','under_review','confirmed','declined','completed'] &&
+        (!('quotedTotal' in request.resource.data) ||
+          (request.resource.data.quotedTotal is int &&
+           request.resource.data.quotedTotal >= 0 &&
+           request.resource.data.quotedTotal <= 500000)) &&
+        (!('paymentStatus' in request.resource.data) ||
+          request.resource.data.paymentStatus in ['unpaid','paid','refunded']) &&
+        request.resource.data.updatedAt == request.time;
     }
 
+    // Bootstrap owner authorization must be created in Firebase Console.
     match /admins/{uid} {
       allow get: if googleUser() && request.auth.uid == uid;
       allow list, create, update, delete: if false;
     }
-
+    // Administrators provision staff in team/{uid}; staff cannot self-promote.
+    match /team/{uid} {
+      allow get: if isAdmin() || (googleUser() && request.auth.uid == uid);
+      allow list: if isAdmin();
+      allow create, update: if isAdmin() &&
+        request.resource.data.keys().hasAll(['role','active']) &&
+        request.resource.data.keys().hasOnly(['role','active','label','updatedAt']) &&
+        request.resource.data.role in ['admin','staff'] &&
+        request.resource.data.active is bool &&
+        (!('label' in request.resource.data) ||
+          (request.resource.data.label is string && request.resource.data.label.size() <= 80)) &&
+        request.resource.data.updatedAt == request.time;
+      allow delete: if isAdmin();
+    }
     match /customers/{uid} {
-      allow create: if googleUser() &&
-        uid == request.auth.uid &&
+      allow create: if googleUser() && uid == request.auth.uid &&
         request.resource.data.keys().hasAll(['displayName','email','createdAt','blocked']) &&
         request.resource.data.keys().hasOnly(['displayName','email','createdAt','blocked']) &&
         request.resource.data.displayName is string &&
@@ -131,35 +172,63 @@ service cloud.firestore {
         request.resource.data.createdAt == request.time &&
         request.resource.data.blocked == false;
       allow get: if isAdmin() || (googleUser() && request.auth.uid == uid);
-      allow list: if isAdmin();
-      // Customers cannot self-unblock, change identity, or rewrite joined dates.
-      allow update, delete: if isAdmin();
+      allow list, update, delete: if isAdmin();
     }
-
     match /settings/{settingId} {
-      allow get: if settingId == 'storefront' || isAdmin();
-      allow list: if isAdmin();
+      allow get: if settingId == 'storefront' || isStaff();
+      allow list: if isStaff();
       allow create, update, delete: if isAdmin();
     }
-
     match /menu/{itemId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if isStaff();
     }
-
     match /orders/{orderId} {
-      // Deterministic document ID: UID_YYYY-MM-DD. One request per account,
-      // per configured workday; a second create cannot overwrite that document.
-      allow create: if activeCustomer() &&
-        orderingEnabled() &&
+      allow create: if activeCustomer() && orderingEnabled() &&
         orderId == request.auth.uid + '_' + get(storefrontPath()).data.menuDayKey &&
         validOrder(request.resource.data);
-      // Users can see only their own orders; admin can view all.
-      allow get, list: if isAdmin() ||
+      allow get, list: if isStaff() ||
         (googleUser() && resource.data.customerUid == request.auth.uid);
-      allow update, delete: if isAdmin();
+      allow update: if isStaff() && safeOrderChange();
+      allow delete: if isAdmin();
     }
-
+    // Orders over 50 servings follow a separate quote-and-confirm workflow.
+    match /bulkRequests/{bulkId} {
+      allow create: if activeCustomer() &&
+        request.resource.data.keys().hasAll([
+          'customerUid','customerName','workplace','mealRequest',
+          'servings','requestedDate','serviceDay','note','createdAt','status'
+        ]) &&
+        request.resource.data.keys().hasOnly([
+          'customerUid','customerName','workplace','mealRequest',
+          'servings','requestedDate','serviceDay','note','createdAt','status'
+        ]) &&
+        request.resource.data.customerUid == request.auth.uid &&
+        request.resource.data.customerName is string &&
+        request.resource.data.customerName.size() >= 2 && request.resource.data.customerName.size() <= 80 &&
+        request.resource.data.workplace is string &&
+        request.resource.data.workplace.size() >= 2 && request.resource.data.workplace.size() <= 100 &&
+        request.resource.data.mealRequest is string &&
+        request.resource.data.mealRequest.size() >= 3 && request.resource.data.mealRequest.size() <= 400 &&
+        request.resource.data.note is string && request.resource.data.note.size() <= 240 &&
+        request.resource.data.servings is int &&
+        request.resource.data.servings >= 51 && request.resource.data.servings <= 500 &&
+        request.resource.data.requestedDate is timestamp &&
+        request.resource.data.requestedDate > request.time &&
+        request.resource.data.requestedDate <= request.time + duration.value(90, 'd') &&
+        request.resource.data.requestedDate.dayOfWeek() <= 5 &&
+        request.resource.data.requestedDate.hours() == 0 &&
+        request.resource.data.requestedDate.minutes() == 0 &&
+        request.resource.data.serviceDay is string &&
+        request.resource.data.serviceDay.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$') &&
+        bulkId == request.auth.uid + '_' + request.resource.data.serviceDay &&
+        request.resource.data.status == 'pending_confirmation' &&
+        request.resource.data.createdAt == request.time;
+      allow get, list: if isStaff() ||
+        (googleUser() && resource.data.customerUid == request.auth.uid);
+      allow update: if isStaff() && safeBulkChange();
+      allow delete: if isAdmin();
+    }
     match /reviews/{orderId} {
       allow create: if activeCustomer() &&
         exists(orderPath(orderId)) &&
@@ -171,14 +240,43 @@ service cloud.firestore {
         request.resource.data.customerUid == request.auth.uid &&
         request.resource.data.rating is int &&
         request.resource.data.rating >= 1 && request.resource.data.rating <= 5 &&
-        request.resource.data.comment is string && request.resource.data.comment.size() <= 500 &&
+        request.resource.data.comment is string &&
+        request.resource.data.comment.size() <= 500 &&
         request.resource.data.createdAt == request.time;
       allow get, list: if isAdmin() ||
         (googleUser() && resource.data.customerUid == request.auth.uid);
-      // Keep the review tied to the original completed order.
       allow update, delete: if false;
     }
-
+    match /feedback/{feedbackId} {
+      allow create: if activeCustomer() &&
+        request.resource.data.keys().hasAll([
+          'customerUid','type','dayKey','rating','message','createdAt','status'
+        ]) &&
+        request.resource.data.keys().hasOnly([
+          'customerUid','type','dayKey','rating','message','createdAt','status'
+        ]) &&
+        request.resource.data.customerUid == request.auth.uid &&
+        request.resource.data.type in
+          ['menu_request','food','website','service','bug','issue','other'] &&
+        request.resource.data.dayKey == dayKeyNow() &&
+        feedbackId == request.auth.uid + '_' +
+          request.resource.data.type + '_' + dayKeyNow() &&
+        request.resource.data.rating is int &&
+        request.resource.data.rating >= 0 && request.resource.data.rating <= 5 &&
+        request.resource.data.message is string &&
+        request.resource.data.message.size() >= 5 &&
+        request.resource.data.message.size() <= 800 &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.status == 'new';
+      allow get, list: if isAdmin() ||
+        (googleUser() && resource.data.customerUid == request.auth.uid) ||
+        (isStaff() && resource.data.type == 'menu_request');
+      allow update: if isAdmin() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','reviewedAt']) &&
+        request.resource.data.status in ['new','reviewing','resolved','closed'] &&
+        request.resource.data.reviewedAt == request.time;
+      allow delete: if isAdmin();
+    }
     match /{document=**} { allow read, write: if false; }
   }
 }
