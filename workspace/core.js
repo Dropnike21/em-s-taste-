@@ -68,8 +68,8 @@ async function loadAll(){
  const essentials=[refreshMenu(),refreshOrders(),refreshBulk(),refreshSuggestions()];
  if(role==="admin")essentials.push(refreshSettings(),refreshPeople(),refreshReports());
  const outcomes=await Promise.allSettled(essentials);
- if(outcomes.every(x=>x.status==="fulfilled")) refreshPrep();
- if(role==="admin"&&outcomes.every(x=>x.status==="fulfilled")){
+ if(outcomes[1]?.status==="fulfilled")refreshPrep();
+ if(role==="admin"&&outcomes[1]?.status==="fulfilled"){
   try{await refreshInsights();}catch(error){console.error(error);msg("Operational data loaded, but ratings could not be refreshed.");}
  }
  const fails=outcomes.filter(x=>x.status==="rejected");
