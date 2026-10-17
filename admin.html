@@ -203,23 +203,17 @@
         </div>
       </section>
       <section id="team-panel" class="admin-panel" role="tabpanel" hidden>
-        <div class="panel-title"><div>
-          <h2>Users & roles</h2>
-          <p>Manage customer, staff, and administrator access in one place. Select a role next to any registered profile.</p>
-        </div>
-          <button id="refresh-team" type="button" class="button button-outline">↻ Refresh users</button>
-        </div>
         <div class="admin-card users-admin-card">
           <div class="users-summary">
-            <div><span class="users-summary-label">Registered customers</span><strong id="users-total">—</strong></div>
-            <div><span class="users-summary-label">Staff access</span><strong id="users-staff">—</strong></div>
-            <div><span class="users-summary-label">Administrator access</span><strong id="users-admins">—</strong></div>
+            <div><span class="users-summary-label">Customers</span><strong id="users-total">—</strong></div>
+            <div><span class="users-summary-label">Staff</span><strong id="users-staff">—</strong></div>
+            <div><span class="users-summary-label">Admins</span><strong id="users-admins">—</strong></div>
           </div>
           <div class="workspace-filterbar users-filterbar">
-            <label class="workspace-search" for="users-search"><span>Find user by name or email</span>
-              <input id="users-search" type="search" placeholder="Search registered accounts…" autocomplete="off">
+            <label class="workspace-search" for="users-search"><span class="sr-only">Find a user</span>
+              <input id="users-search" type="search" placeholder="Search name or email…" autocomplete="off" aria-label="Search users">
             </label>
-            <label class="workspace-select" for="users-role-filter"><span>Role</span>
+            <label class="workspace-select" for="users-role-filter"><span class="sr-only">Filter by role</span>
               <select id="users-role-filter">
                 <option value="all">All roles</option>
                 <option value="customer">Customer</option>
@@ -228,7 +222,7 @@
               </select>
             </label>
           </div>
-          <p id="team-refresh-status" class="team-refresh-status" role="status" aria-live="polite">Loading registered users…</p>
+          <p id="team-refresh-status" class="team-refresh-status" role="status" aria-live="polite" hidden></p>
           <div id="users-directory" class="users-directory">
             <p class="muted">Loading registered users…</p>
           </div>
@@ -236,11 +230,14 @@
             <p id="users-visible-count" class="muted">No users loaded yet.</p>
             <button id="users-load-more" type="button" class="button button-outline" hidden>Load more users</button>
           </div>
-          <p class="form-hint">This list includes website customer profiles and existing team records, not Firebase Authentication-only accounts. Your owner account is protected. Changes to a user's role take effect when permissions are rechecked; ask staff to sign out and sign in again.</p>
+          <details class="users-info">
+            <summary>About the accounts shown</summary>
+            <p>Shows website customers and authorized team records. Accounts existing only in Firebase Authentication are added when they next sign in. Original owner access is protected.</p>
+          </details>
         </div>
         <details class="admin-card users-advanced">
           <summary>Advanced: authorize an account without a customer profile</summary>
-          <p class="muted">For staff who previously signed into the admin portal but have not registered on the customer website. Most roles can be assigned directly from the user list above.</p>
+          <p class="muted">Use only when an existing Firebase user has no website profile.</p>
           <form id="team-form">
             <label for="member-uid">Firebase user UID *</label>
             <input id="member-uid" required maxlength="128" placeholder="Existing Firebase Authentication UID">
