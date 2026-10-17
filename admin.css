@@ -30,3 +30,14 @@
 .prep-table td{padding:12px 14px;border-top:1px solid var(--line);color:#62574d}
 .prep-table tbody tr:hover{background:#fdf9f3}
 .subsection-title{margin-top:28px!important;padding-top:18px;border-top:1px solid var(--line)}
+
+/* Login troubleshooting without exposing administrator-only modules. */
+.admin-access-help{margin-top:22px;text-align:left;background:#fff9f3;border:1px solid #e8cdb7;border-radius:9px;color:#6f4b38}
+.admin-access-help summary{padding:13px 17px;font-weight:700;font-size:13px;cursor:pointer}
+.admin-access-help[open] summary{border-bottom:1px solid #ebd6c8}
+.admin-access-help p,.admin-access-help .admin-identity{margin:12px 16px;font-size:12px;line-height:1.7;overflow-wrap:anywhere}
+.admin-access-help a{color:var(--terracotta);text-decoration:underline;text-underline-offset:2px}
+.admin-access-help code{font:12px ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}
+.admin-access-help .admin-identity{display:flex;flex-direction:column;gap:2px;padding:8px 0;border-top:1px solid #efe2d6}
+.admin-access-help .admin-identity span{color:#987a68}
+.admin-access-help .admin-identity strong{font-size:12px;color:#463326}
