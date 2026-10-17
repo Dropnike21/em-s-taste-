@@ -76,7 +76,7 @@ service cloud.firestore {
         item.id is string && item.id.size() > 0 && item.id.size() <= 60 &&
         item.id.matches('^[a-z0-9-]+$') &&
         item.name is string && item.name.size() > 0 && item.name.size() <= 100 &&
-        item.quantity is int && item.quantity >= 1 && item.quantity <= 5 &&
+        item.quantity is int && item.quantity >= 1 && item.quantity <= 50 &&
         item.unitPrice is int && item.unitPrice >= 1 && item.unitPrice <= 5000 &&
         exists(menuPath(item.id)) &&
         get(menuPath(item.id)).data.available == true &&
@@ -122,8 +122,8 @@ service cloud.firestore {
         data.status == 'pending' && data.createdAt == request.time &&
         data.serviceDate is timestamp && data.serviceDate == nextWorkdayDate() &&
         data.serviceDay == get(storefrontPath()).data.menuDayKey &&
-        data.total is int && data.total >= 1 && data.total <= 3000 &&
-        validLines(data.items) && totalUnits(data.items) <= 10 &&
+        data.total is int && data.total >= 1 && data.total <= 250000 &&
+        validLines(data.items) && totalUnits(data.items) <= 50 &&
         data.total == verifiedTotal(data.items);
     }
     function safeOrderChange() {
