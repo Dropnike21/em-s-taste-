@@ -3,7 +3,7 @@ import {collection,doc,getDocs,setDoc,query,where,limit,serverTimestamp,Timestam
 
 const $=selector=>document.querySelector(selector);
 const clean=value=>String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-let loadedUid=null,loading=false;
+let loadedUid=null,loading=false,lastSeenUid=null;
 function manilaKey(){
  const p=Object.fromEntries(new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Manila",year:"numeric",month:"numeric",day:"numeric"}).formatToParts(new Date()).map(x=>[x.type,x.value]));
  return p.year+"-"+Number(p.month)+"-"+Number(p.day);
@@ -29,6 +29,16 @@ function customer(){
 }
 function updateVisibility(){
  const current=customer();
+ const uid=current?.uid||null;
+ if (lastSeenUid && lastSeenUid !== uid) {
+  $("#feedback-form").reset();
+  $("#bulk-form").reset();
+  showStatus("#feedback-status","");
+  showStatus("#bulk-status","");
+  $("#customer-request-history").open=false;
+  $("#customer-service-history").textContent="";
+ }
+ lastSeenUid=uid;
  $("#customer-service-forms").hidden=!current;
  $("#customer-request-history").hidden=!current;
  $("#services-auth").hidden=!!current;
@@ -52,6 +62,7 @@ async function loadHistory(){
    getDocs(query(collection(db,"bulkRequests"),where("customerUid","==",profile.uid),limit(50))),
    getDocs(query(collection(db,"feedback"),where("customerUid","==",profile.uid),limit(50)))
   ]);
+  if (customer()?.uid !== profile.uid) return;
   const entries=[
    ...bulk.docs.map(x=>({kind:"Large booking",id:x.id,...x.data(),summary:x.data().mealRequest})),
    ...feedback.docs.map(x=>({kind:"Report / feedback",id:x.id,...x.data(),summary:x.data().message}))
