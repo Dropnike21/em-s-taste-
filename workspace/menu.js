@@ -182,16 +182,34 @@ export function initMenu(){
   for(const id of ["dish-image-credit","dish-image-license","dish-image-license-url","dish-image-source"])$("#"+id).value="";
   preview();
  });
- $("#photo-chooser").addEventListener("click",event=>{
+ $("#photo-chooser").addEventListener("click",async event=>{
   const button=event.target.closest("[data-photo-choice]");if(!button)return;
   const pic=photoOptions[Number(button.dataset.photoChoice)];if(!pic)return;
+  const existingId=$("#dish-id").value;
+  button.disabled=true;
+  if(existingId){
+   try{
+    // Save the chosen photo immediately, independently from other editable fields.
+    await updateDoc(doc(db,"menu",existingId),{
+     image:pic.image,imageCredit:pic.credit,imageLicense:pic.license,
+     imageLicenseUrl:pic.licenseUrl||"",imageSource:pic.source
+    });
+    await refreshMenu();
+    window.dispatchEvent(new Event("ems-workspace-menu-updated"));
+    msg("Dish photo saved.",true);
+   }catch(error){
+    console.error(error);
+    msg("Could not save the photo. Please try again.");
+    button.disabled=false;return;
+   }
+  }
   $("#dish-image").value=pic.image;
   $("#dish-image-credit").value=pic.credit;
   $("#dish-image-license").value=pic.license;
   $("#dish-image-license-url").value=pic.licenseUrl||"";
   $("#dish-image-source").value=pic.source;
   $("#photo-chooser").hidden=true;preview();
-  msg("Photo chosen. Tap Save changes to keep it.",true);
+  if(!existingId)msg("Picture chosen. Save the new dish when ready.",true);
  });
  $("#admin-dishes").addEventListener("click",async event=>{
   const button=event.target.closest("button");if(!button)return;
