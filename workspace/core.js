@@ -1,7 +1,7 @@
 import { auth, db, $, msg } from "./shared.js";
 import {
   GoogleAuthProvider, onAuthStateChanged, signInWithPopup,
-  signOut, getIdTokenResult
+  signOut
 } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
 import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
 import { initMenu, refreshMenu, refreshSuggestions } from "./menu.js";
@@ -13,6 +13,7 @@ import { refreshInsights } from "./insights.js";
 import { initPeople, refreshPeople, refreshTeam, clearTeamCache } from "./people.js";
 import { initReports, refreshReports } from "./reports.js";
 import { refreshOverview } from "./overview.js";
+import { getWorkspaceRole } from "../ui/roles.js";
 
 const staffPanels = new Set(["overview-panel", "orders-panel", "bulk-panel", "prep-panel", "menu-panel"]);
 const adminPanels = new Set(["settings-panel", "insights-panel", "reports-panel", "team-panel"]);
@@ -56,6 +57,10 @@ function showLogin() {
   $("#login-view").hidden = false;
   $("#dashboard-view").hidden = true;
   $("#sign-out").hidden = true;
+  window.EMS_UI?.setAccount({
+    signedIn: false,
+    onSignIn: () => $("#google-login").click()
+  });
 }
 function showHelp(user, reason) {
   const el = $("#admin-access-help");
@@ -105,7 +110,15 @@ function showDashboard(user, access) {
   role = access;
   $("#login-view").hidden = true;
   $("#dashboard-view").hidden = false;
-  $("#sign-out").hidden = false;
+  $("#sign-out").hidden = true; // Sign-out is in the shared account menu.
+  window.EMS_UI?.setAccount({
+    signedIn: true,
+    name: user.displayName || user.email || "Team member",
+    email: user.email || "",
+    role,
+    canManage: true,
+    onSignOut: () => $("#sign-out").click()
+  });
   $("#workspace-role").textContent = role === "admin" ? "Administrator" : "Staff member";
   $("#workspace-email").textContent = user.email || "Google account";
   const isAdmin = role === "admin";
@@ -137,20 +150,13 @@ async function ensureProfile(user) {
   }
 }
 async function getRole(user) {
-  const result = await getIdTokenResult(user);
-  if (result.claims?.firebase?.sign_in_provider !== "google.com") return null;
-  // Original owner authorization and staff roles are distinct; the customer
-  // profile has no bearing on either.
-  const owner = await getDoc(doc(db, "admins", user.uid));
-  if (owner.exists() && owner.data().active === true) return "admin";
-  const team = await getDoc(doc(db, "team", user.uid));
-  if (team.exists() && team.data().active === true &&
-      ["admin", "staff"].includes(team.data().role)) return team.data().role;
-  return null;
+  return getWorkspaceRole(user);
 }
+
 async function loadAll(force = false) {
   if (!role || loading) return;
   loading = true;
+  if (force) window.EMS_UI?.showLoading("Refreshing kitchen data…");
   const button = $("#refresh-dashboard");
   button.disabled = true;
   button.textContent = "Refreshing…";
@@ -190,6 +196,7 @@ async function loadAll(force = false) {
     loading = false;
     button.disabled = false;
     button.textContent = "↻ Refresh";
+    if (force) window.EMS_UI?.hideLoading();
   }
 }
 async function authorize(user) {
@@ -227,10 +234,12 @@ async function authorize(user) {
   } finally {
     verifying = false;
     loginButton.disabled = false;
+    window.EMS_UI?.hideLoading();
   }
 }
 onAuthStateChanged(auth, async user => {
   if (!user) {
+    window.EMS_UI?.hideLoading();
     authAttempt += 1;
     clearTeamCache();
     clearPrivateViews();
@@ -240,6 +249,7 @@ onAuthStateChanged(auth, async user => {
     setLoginState("No separate Em’s Taste password required.");
     return;
   }
+  window.EMS_UI?.showLoading("Checking your workspace access…");
   await ensureProfile(user);
   await authorize(user);
 });
