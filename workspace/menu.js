@@ -4,6 +4,7 @@ import {FILIPINO_DISHES} from "./filipino-dishes.js";
 
 let dishes=[];
 const byPreset=new Map(FILIPINO_DISHES.map(d=>[d.id,d]));
+export function allProducts(){return dishes.slice();}
 export function menuItems(){return dishes.filter(d=>d.archived!==true);}
 export function eligibleProducts(){return menuItems().filter(d=>d.available===true && Number.isInteger(d.price) && d.price>0 && d.configured!==false);}
 const archived=d=>d.archived===true;
@@ -24,6 +25,10 @@ function render(){
  const filter=$("#dish-list-filter").value;
  const list=dishes.filter(d=>filter==="all"||(filter==="archived"?archived(d):!archived(d)));
  $("#stat-items").textContent=menuItems().length;
+ const notAdded=FILIPINO_DISHES.filter(d=>!presetMatch(d)).length;
+ $("#seed-catalog").disabled=notAdded===0;
+ $("#seed-catalog").textContent=notAdded===0 ?
+   "30 starter products added" : "Add "+notAdded+" missing starter products";
  const drafts=menuItems().filter(d=>d.configured===false || !Number.isInteger(d.price) || d.price<1).length;
  $("#catalog-seed-status").textContent= drafts
    ? drafts+" products still need a price and activation before scheduling."
@@ -201,7 +206,9 @@ export async function seedCatalog(){
   console.error("Catalog setup failed:",error);
   msg("Unable to add starter products. Check staff permissions and try again.");
  }finally{
-  button.disabled=false;button.textContent="Add 30 Filipino starter products";
+  const notAdded=FILIPINO_DISHES.filter(d=>!presetMatch(d)).length;
+  button.disabled=notAdded===0;
+  button.textContent=notAdded===0?"30 starter products added":"Add "+notAdded+" missing starter products";
  }
 }
 export async function refreshSuggestions(){
