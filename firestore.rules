@@ -6,7 +6,7 @@ service cloud.firestore {
     }
     function isAdmin() {
       return request.auth != null &&
-        request.auth.token.firebase.sign_in_provider == 'facebook.com' &&
+        request.auth.token.firebase.sign_in_provider == 'google.com' &&
         exists(adminPath()) &&
         get(adminPath()).data.active == true;
     }
@@ -101,7 +101,7 @@ service cloud.firestore {
       // Create the first admin authorization document using Firebase Console
       // or a trusted Admin SDK, NEVER from a public website.
       allow get: if request.auth != null &&
-        request.auth.token.firebase.sign_in_provider == 'facebook.com' &&
+        request.auth.token.firebase.sign_in_provider == 'google.com' &&
         request.auth.uid == uid;
       allow list, create, update, delete: if false;
     }
