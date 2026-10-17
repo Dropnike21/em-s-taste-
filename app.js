@@ -14,6 +14,8 @@
   let filter = "all";
   let cart = loadCart();
   let lastCustomerUid = null;
+  let guestBrowsing = false;
+  try { guestBrowsing = sessionStorage.getItem("ems-browse-as-guest") === "yes"; } catch { /* Private browsing may disable storage. */ }
   let lastFocus = null;
   let orderText = "";
   let schedule = getSchedule();
@@ -277,6 +279,53 @@
     }
   }
 
+  function rememberGuestChoice(value) {
+    guestBrowsing = value;
+    try {
+      if (value) sessionStorage.setItem("ems-browse-as-guest", "yes");
+      else sessionStorage.removeItem("ems-browse-as-guest");
+    } catch { /* Session-only convenience, not security. */ }
+  }
+  function showStorefrontForGuest() {
+    rememberGuestChoice(true);
+    renderGateway();
+  }
+  function openSignInGateway() {
+    if (window.EMS_LIVE_STATE?.customer?.uid) {
+      $("#account-section").scrollIntoView({behavior:"smooth",block:"start"});
+      return;
+    }
+    rememberGuestChoice(false);
+    renderGateway();
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+  function renderGateway() {
+    const live = window.EMS_LIVE_STATE;
+    const ready = live?.authReady === true;
+    const signedIn = Boolean(live?.customer?.uid);
+    if (signedIn && guestBrowsing) rememberGuestChoice(false);
+    const intro = !signedIn && !guestBrowsing;
+    $("#welcome-gate").hidden = !intro;
+    $("#storefront-content").hidden = intro;
+    $("#account-section").hidden = !signedIn;
+    $("#welcome-google-login").disabled = !ready;
+    $("#welcome-browse").disabled = !ready;
+    $("#welcome-status").textContent = !ready
+      ? "Checking your Google sign-in…"
+      : live?.accountError
+        ? "Account sign-in could not finish: " + live.accountError
+        : "Sign in securely with Google. It only takes a moment.";
+    $("#account-shortcut").textContent = signedIn ? "My account" : "Sign in";
+    $("#account-shortcut").setAttribute("aria-label",
+      signedIn ? "View your account and past orders" : "Sign in with Google");
+    if (intro) {
+      // The normal cart is not useful before the visitor chooses a path.
+      $("#open-cart").hidden = true;
+    } else {
+      $("#open-cart").hidden = false;
+    }
+  }
+
   function renderCustomer() {
     const live = window.EMS_LIVE_STATE;
     const customer = live?.customer;
@@ -298,7 +347,7 @@
     $("#customer-signout").hidden = !signedIn;
     $("#customer-refresh").hidden = !signedIn;
     $("#customer-history").hidden = !signedIn;
-    $("#account-shortcut").textContent = signedIn ? "Account" : "Sign in";
+    $("#account-shortcut").textContent = signedIn ? "My account" : "Sign in";
     $("#customer-heading").textContent = signedIn ? "Welcome back, " + customer.displayName + "." : "Your orders, all in one place.";
     $("#customer-status").textContent = live?.accountError ||
       (customer?.blocked ? "Ordering is disabled for this account. Contact Em's Taste for assistance."
@@ -328,19 +377,27 @@
         : '<p class="muted">No orders yet. Your requests will appear here after you submit them.</p>';
     }
     updateCheckoutButton();
+    renderGateway();
   }
 
   async function customerSignIn() {
+    if (window.EMS_LIVE_STATE?.customer?.uid) return;
     $("#customer-status").textContent = "Opening Google sign-in…";
+    $("#welcome-status").textContent = "Opening Google sign-in…";
+    $("#welcome-google-login").disabled = true;
     try {
       await window.EMS_GOOGLE_SIGNIN();
     } catch (err) {
       console.error(err);
-      $("#customer-status").textContent = err.code === "auth/popup-closed-by-user"
+      const message = err.code === "auth/popup-closed-by-user"
         ? "Sign-in was cancelled."
         : err.code === "auth/popup-blocked"
-        ? "Your browser blocked the sign-in popup. Please enable popups or use a normal browser."
-        : "Unable to sign in with Google. Check your browser and Firebase Authentication settings.";
+        ? "Your browser blocked the sign-in popup. Enable popups or open this website in Chrome."
+        : "Unable to sign in with Google. Check your internet connection and try again.";
+      $("#customer-status").textContent = message;
+      $("#welcome-status").textContent = message;
+    } finally {
+      $("#welcome-google-login").disabled = false;
     }
   }
 
@@ -360,6 +417,9 @@
     nav.addEventListener("click", e => {
       const link = e.target.closest("a[href]");
       if (!link) return;
+      if (link.hasAttribute("data-guest-nav") && !window.EMS_LIVE_STATE?.customer && !guestBrowsing) {
+        showStorefrontForGuest();
+      }
       closeNavigation();
       if (link.getAttribute("href") === "#account-section" && window.EMS_LIVE_STATE?.customer) {
         $("#orders-details").open = true;
@@ -372,9 +432,24 @@
       if (e.key === "Escape") closeNavigation();
     });
     $("#account-shortcut").addEventListener("click", () => {
-      if (window.EMS_LIVE_STATE?.customer) $("#orders-details").open = true;
-      $("#account-section").scrollIntoView({behavior:"smooth", block:"start"});
+      if (window.EMS_LIVE_STATE?.customer) {
+        $("#orders-details").open = true;
+        $("#account-section").scrollIntoView({behavior:"smooth", block:"start"});
+      } else {
+        openSignInGateway();
+      }
       closeNavigation();
+    });
+    $("#welcome-google-login").addEventListener("click", customerSignIn);
+    $("#welcome-browse").addEventListener("click", () => {
+      showStorefrontForGuest();
+      $("#menu").scrollIntoView({behavior:"smooth",block:"start"});
+    });
+    document.addEventListener("click", e => {
+      const link = e.target.closest("[data-show-login]");
+      if (!link) return;
+      e.preventDefault();
+      openSignInGateway();
     });
     $("#customer-google-login").addEventListener("click", customerSignIn);
     $("#cart-google-login").addEventListener("click", async () => {
@@ -549,5 +624,6 @@
     updateSchedule();
   }
   renderCustomer();
+  // A returning signed-in visitor skips the intro; guests choose when to browse.
   window.setInterval(updateSchedule, 30000);
 })();
