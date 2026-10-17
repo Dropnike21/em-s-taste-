@@ -129,6 +129,10 @@ export function initMenu(){
   const previous=dishes.find(d=>d.id===currentId);
   const slug=name.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,35)||"meal";
   const id=currentId||(preset?"dish-"+preset.id:slug+"-"+crypto.randomUUID().slice(0,8));
+  if (!currentId && dishes.some(d => d.id === id)) {
+   msg("This saved product ID already exists. Edit that meal instead of overwriting it.");
+   return;
+  }
   const data={
    name,price,category:$("#dish-category").value,description:$("#dish-description").value.trim(),
    tag:$("#dish-tag").value.trim(),available:$("#dish-available").checked&&!archived(previous||{}),
