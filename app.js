@@ -175,6 +175,7 @@
   function paintCart() {
     const count = totalItems();
     $("#cart-count").textContent = count;
+    $("#open-cart").setAttribute("aria-label", "Open cart, " + count + (count === 1 ? " item" : " items"));
     $("#drawer-count").textContent = "(" + count + ")";
     $("#cart-total").textContent = money(totalAmount());
     const rows = lineItems();
@@ -394,6 +395,7 @@
     $("#customer-status").textContent = "Opening Google sign-in…";
     $("#welcome-status").textContent = "Opening Google sign-in…";
     $("#welcome-google-login").disabled = true;
+    window.EMS_UI?.showLoading("Signing in with Google…");
     try {
       await window.EMS_GOOGLE_SIGNIN();
     } catch (err) {
@@ -407,6 +409,8 @@
       $("#welcome-status").textContent = message;
     } finally {
       $("#welcome-google-login").disabled = false;
+      // Firebase's account callback owns later profile/menu loading states.
+      window.EMS_UI?.hideLoading();
     }
   }
 
@@ -426,6 +430,10 @@
     nav.addEventListener("click", e => {
       const link = e.target.closest("a[href]");
       if (!link) return;
+      nav.querySelectorAll('a[href^="#"]').forEach(item => {
+        if (item === link) item.setAttribute("aria-current", "page");
+        else item.removeAttribute("aria-current");
+      });
       if (link.hasAttribute("data-guest-nav") && !window.EMS_LIVE_STATE?.customer && !guestBrowsing) {
         showStorefrontForGuest();
       }
@@ -566,6 +574,7 @@
       const button = $("#prepare-order");
       button.dataset.submitting = "yes";
       updateCheckoutButton();
+      window.EMS_UI?.showLoading("Sending your meal request…");
       try {
         const reference = await window.EMS_SUBMIT({
           name, workplace, note, items, total: totalAmount(), serviceDate: schedule.serviceDate
@@ -584,6 +593,7 @@
       } finally {
         button.dataset.submitting = "no";
         updateCheckoutButton();
+        window.EMS_UI?.hideLoading();
       }
     });
     $("#copy-order").addEventListener("click", copyOrder);
