@@ -23,7 +23,7 @@ const panelInfo = {
   "prep-panel": ["Kitchen preparation", "Organize confirmed servings by dish and workplace."],
   "menu-panel": ["Menu & products", "Manage food names, descriptions, prices, and availability."],
   "settings-panel": ["Ordering controls", "Configure the next meal workday and preorder availability."],
-  "insights-panel": ["Customers & insights", "Review customer activity and completed-meal feedback."],
+  "insights-panel": ["Insights", "Explore orders, meal popularity, and completed-meal ratings."],
   "reports-panel": ["Reports & feedback", "Review customer concerns and resolve reported problems."],
   "team-panel": ["Users & roles", "Search registered accounts and assign Customer, Staff, or Administrator access."]
 };
@@ -78,7 +78,7 @@ function activateTab(panelId, changeHistory = false) {
   const [title, subtitle] = panelInfo[panelId];
   $("#workspace-page-title").textContent = title;
   $("#workspace-page-desc").textContent = subtitle;
-  if (changeHistory) history.replaceState(null, "", "#" + panelId);
+  if (changeHistory && location.hash !== "#" + panelId) history.pushState({emsPanel:panelId}, "", "#" + panelId);
   closeMobileNav();
   if (panelId === "team-panel" && role === "admin") {
     refreshTeam().catch(error => console.error("Team directory refresh failed:", error));
@@ -271,6 +271,22 @@ $("#workspace-mobile-nav").addEventListener("click", () => {
   const area = $(".workspace-nav-area");
   const open = area.classList.toggle("mobile-open");
   $("#workspace-mobile-nav").setAttribute("aria-expanded", String(open));
+  if (open) {
+    const selected = area.querySelector("[data-panel].active");
+    (selected || area.querySelector("[data-panel]:not([hidden])"))?.focus();
+  }
+});
+document.addEventListener("click", event => {
+  const area = $(".workspace-nav-area");
+  const toggle = $("#workspace-mobile-nav");
+  if (area.classList.contains("mobile-open") &&
+      !area.contains(event.target) && !toggle.contains(event.target)) closeMobileNav();
+});
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape" && $(".workspace-nav-area").classList.contains("mobile-open")) {
+    closeMobileNav();
+    $("#workspace-mobile-nav").focus();
+  }
 });
 document.querySelectorAll("[data-panel]").forEach(tab => {
   tab.addEventListener("click", () => activateTab(tab.dataset.panel, true));
@@ -288,10 +304,13 @@ document.addEventListener("click", event => {
   if (!button || !role) return;
   activateTab(button.dataset.go, true);
 });
-window.addEventListener("hashchange", () => {
+function restorePanelFromUrl() {
   const panelId = decodeURIComponent(location.hash.replace(/^#/, ""));
   if (authorizedPanel(panelId)) activateTab(panelId);
-});
+  else if (role) activateTab("overview-panel");
+}
+window.addEventListener("hashchange", restorePanelFromUrl);
+window.addEventListener("popstate", restorePanelFromUrl);
 
 window.addEventListener("ems-workspace-orders-updated", () => {
   if (!role) return;
