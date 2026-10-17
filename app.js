@@ -145,6 +145,35 @@
         "No meals in this category right now.") + '</p>';
   }
 
+  function renderWeeklyPreview() {
+    const state = window.EMS_LIVE_STATE;
+    const week = state?.weeklyPreview || [];
+    const published = week.some(day => day.published);
+    const section = $("#weekly-preview-section");
+    section.hidden = !published;
+    if (!published) return;
+    const all = state.catalog || [];
+    const serviceDay = schedule.serviceDate.toISOString().slice(0,10);
+    const formatDate = value => new Intl.DateTimeFormat("en-PH", {
+      timeZone:"UTC",month:"short",day:"numeric"
+    }).format(new Date(value+"T00:00:00.000Z"));
+    const names=["Monday","Tuesday","Wednesday","Thursday","Friday"];
+    $("#weekly-preview-grid").innerHTML=week.map((day,i)=>{
+      const foods = all.filter(item => item.available === true &&
+        day.published && day.itemIds.includes(item.id));
+      const meals = foods.length
+        ? '<ul>'+foods.map(item=>'<li><strong>'+html(item.name)+'</strong><span>'+
+            money(Number(item.price)||0)+'</span></li>').join("")+'</ul>'
+        : '<p class="week-preview-empty">'+(day.published?"No meals scheduled":"Not published yet")+'</p>';
+      const highlight = day.dayKey===serviceDay;
+      return '<article class="week-preview-card'+(highlight?" current":"")+'">'+
+        '<div class="week-preview-day"><span>'+names[i]+'</span><small>'+
+        html(formatDate(day.dayKey))+'</small></div>'+
+        (highlight?'<span class="week-preview-mark">Next service day</span>':"")+
+        meals+'</article>';
+    }).join("");
+  }
+
   function lineItems() {
     return dishes.filter(d => cart[d.id] > 0 && d.available !== false);
   }
@@ -611,6 +640,7 @@
   updateSchedule();
   paintMenu();
   paintCart();
+  renderWeeklyPreview();
   setupEvents();
   window.addEventListener("ems-data", () => {
     const live = window.EMS_LIVE_STATE;
@@ -622,6 +652,7 @@
       paintCart();
     }
     updateSchedule();
+    renderWeeklyPreview();
     renderCustomer();
   });
   if (window.EMS_LIVE_STATE?.ready) {
