@@ -13,62 +13,122 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="admin.css">
 </head>
-<body>
-  <header class="admin-header">
-    <div class="shell admin-head-row">
-      <a href="./" class="brand"><img src="logo.svg" alt="" width="46" height="46">
-        <span class="brand-text"><strong>Em’s Taste</strong><small>ADMINISTRATION</small></span></a>
-      <div class="admin-head-actions">
-        <a href="./" class="back-to-site">← View storefront</a>
-        <button type="button" id="sign-out" class="button button-outline" hidden>Sign out</button>
-      </div>
+<body class="admin-page">
+<header class="admin-header">
+  <div class="shell admin-head-row">
+    <a href="./" class="brand" aria-label="Return to Em's Taste storefront"><img src="logo.svg" alt="" width="46" height="46">
+      <span class="brand-text"><strong>Em’s Taste</strong><small>KITCHEN WORKSPACE</small></span></a>
+    <div class="admin-head-actions">
+      <a class="back-to-site" href="./">↗ <span>View customer website</span></a>
+      <button type="button" id="sign-out" class="button button-outline" hidden>Sign out</button>
     </div>
-  </header>
-  <main class="shell admin-main">
-    <div class="admin-banner"><strong>Admin workspace</strong><span>Only authorized Em’s Taste staff can manage menus and review customer order requests.</span></div>
-    <p id="page-message" role="status" class="admin-message" aria-live="polite"></p>
-
-    <section id="login-view" class="login-card" aria-labelledby="login-title">
-      <img src="logo.svg" width="94" height="94" alt="">
-      <p class="section-kicker">WELCOME BACK</p>
-      <h1 id="login-title">Sign in to <em>Em’s Taste</em></h1>
-      <p class="card-intro">Use your Google account to access the kitchen dashboard. Only pre-approved administrators can enter.</p>
+  </div>
+</header>
+<main id="admin-main" class="shell admin-main">
+  <p id="page-message" role="status" aria-live="polite" class="admin-message" hidden></p>
+  <section id="login-view" class="workspace-login" aria-labelledby="login-title">
+    <div class="login-story">
+      <p class="section-kicker">EM’S TASTE · KITCHEN OPERATIONS</p>
+      <h1>Good food starts <em>behind the scenes.</em></h1>
+      <p>One place to manage the meals, people, and little details that make every order feel like home.</p>
+      <div class="login-story-points"><span>✓ Plan tomorrow’s menu</span><span>✓ Organize orders and preparation</span><span>✓ Keep your team in sync</span></div>
+      <span class="login-story-foot">Lutong Bahay, Gawang May Puso.</span>
+    </div>
+    <div class="login-card">
+      <div class="login-brand-mark"><img src="logo.svg" width="84" height="84" alt="Em's Taste bowl logo"></div>
+      <p class="section-kicker">PRIVATE TEAM ACCESS</p>
+      <h2 id="login-title">Welcome <em>back.</em></h2>
+      <p class="card-intro">Sign in using the Google account approved for Em’s Taste staff or administration.</p>
       <button id="google-login" type="button" class="button google-login-button button-full">
         <span class="google-mark" aria-hidden="true">G</span> Continue with Google
       </button>
-      <p class="form-hint">Use the same Google account that was approved for Em’s Taste. Your Firebase UID must have an active administrator or staff record.</p>
+      <p id="login-state" class="login-state" role="status" aria-live="polite">No separate Em’s Taste password required.</p>
+      <div class="login-security"><span aria-hidden="true">▣</span><span>Protected workspace · Access is assigned by the business owner.</span></div>
       <details id="admin-access-help" class="admin-access-help" hidden>
-        <summary>Access troubleshooting</summary>
+        <summary>Having trouble signing in?</summary>
         <p id="admin-help-reason">Your administrator account has not been verified.</p>
-        <div class="admin-identity"><span>Signed-in Google account</span><strong id="admin-help-email">—</strong></div>
-        <div class="admin-identity"><span>Firebase Authentication UID</span><code id="admin-help-uid">—</code></div>
-        <p>The business owner must create <code>admins/{your UID}</code> with <code>active</code> set to Boolean <code>true</code>, or authorize your UID under <code>team/{your UID}</code> as staff/admin. This must be done in Firebase Console by an authorized owner.</p>
-        <p><a href="https://console.firebase.google.com/project/ems-taste/firestore/data" target="_blank" rel="noopener noreferrer">Check administrator record in Firestore ↗</a>
-        · <a href="https://console.firebase.google.com/project/ems-taste/firestore/rules" target="_blank" rel="noopener noreferrer">Check published security rules ↗</a></p>
+        <div class="admin-identity"><span>Google account</span><strong id="admin-help-email">—</strong></div>
+        <div class="admin-identity"><span>Firebase user ID</span><code id="admin-help-uid">—</code></div>
+        <p>For the original owner, create an <code>admins/{uid}</code> document with Boolean <code>active: true</code>. Other staff use the <code>team/{uid}</code> record assigned by the owner. Customer profiles do not affect staff access.</p>
+        <p><a href="https://console.firebase.google.com/project/ems-taste/firestore/data" target="_blank" rel="noopener noreferrer">Open Firestore records ↗</a> · <a href="https://console.firebase.google.com/project/ems-taste/firestore/rules" target="_blank" rel="noopener noreferrer">Published rules ↗</a></p>
+        <button type="button" id="retry-access" class="button button-outline">Check access again</button>
       </details>
-    </section>
-
-    <div id="dashboard-view" hidden>
-      <div class="admin-title-row">
-        <div><p id="workspace-role" class="section-kicker">KITCHEN WORKSPACE</p><h1>Good morning, <em>team Em’s.</em></h1><p>Manage tomorrow’s menu and keep orders organized in one place.</p></div>
-        <button id="refresh-dashboard" type="button" class="button button-outline">↻ Refresh</button>
+      <p class="login-return"><a href="./">← Go back to the food menu</a></p>
+    </div>
+  </section>
+  <div id="dashboard-view" class="workspace-layout" hidden>
+    <div class="workspace-nav-area">
+      <div class="workspace-nav-heading">
+        <span id="workspace-role" class="workspace-role-label">KITCHEN WORKSPACE</span>
+        <span id="workspace-email" class="workspace-email">Signed in</span>
       </div>
-      <div class="stat-row">
-        <div class="stat-card"><span>Menu items</span><strong id="stat-items">0</strong><small>Saved in Firestore</small></div>
-        <div class="stat-card"><span>Pending orders</span><strong id="stat-pending">0</strong><small>Awaiting staff confirmation</small></div>
-        <div class="stat-card admin-stat" data-roles="admin"><span>Customers</span><strong id="stat-customers">0</strong><small>Registered customer profiles</small></div>
-        <div class="stat-card"><span>Pending bulk</span><strong id="stat-bulk">0</strong><small>Requests above 50 servings</small></div><div class="stat-card"><span>Recorded total</span><strong id="stat-total">₱0.00</strong><small>Recent requests, not sales</small></div>
+      <nav class="admin-tabs" id="workspace-navigation" role="tablist" aria-label="Kitchen workspace navigation">
+        <div class="workspace-nav-section">
+          <p class="nav-section-label">HOME</p>
+          <button type="button" role="tab" data-panel="overview-panel" aria-controls="overview-panel" aria-selected="true" class="workspace-nav-item active" ><span class="nav-symbol" aria-hidden="true">⌂</span><span>Overview</span><span class="nav-trailing" aria-hidden="true">›</span></button>
+        </div>
+        <div class="workspace-nav-section">
+          <p class="nav-section-label">DAILY OPERATIONS</p>
+          <button type="button" role="tab" data-panel="orders-panel" aria-controls="orders-panel" aria-selected="false" class="workspace-nav-item" ><span class="nav-symbol" aria-hidden="true">▤</span><span>Orders & payments</span><span class="nav-trailing" aria-hidden="true">›</span></button>
+<button type="button" role="tab" data-panel="bulk-panel" aria-controls="bulk-panel" aria-selected="false" class="workspace-nav-item" ><span class="nav-symbol" aria-hidden="true">♧</span><span>Bulk requests</span><span class="nav-trailing" aria-hidden="true">›</span></button>
+<button type="button" role="tab" data-panel="prep-panel" aria-controls="prep-panel" aria-selected="false" class="workspace-nav-item" ><span class="nav-symbol" aria-hidden="true">◫</span><span>Kitchen prep</span><span class="nav-trailing" aria-hidden="true">›</span></button>
+<button type="button" role="tab" data-panel="menu-panel" aria-controls="menu-panel" aria-selected="false" class="workspace-nav-item" ><span class="nav-symbol" aria-hidden="true">▦</span><span>Menu & products</span><span class="nav-trailing" aria-hidden="true">›</span></button>
+        </div>
+        <div class="workspace-nav-section" id="admin-nav-section" hidden>
+          <p class="nav-section-label">ADMINISTRATION</p>
+          <button type="button" role="tab" data-panel="settings-panel" aria-controls="settings-panel" aria-selected="false" class="workspace-nav-item" data-admin-only hidden><span class="nav-symbol" aria-hidden="true">◷</span><span>Ordering controls</span><span class="nav-trailing" aria-hidden="true">›</span></button>
+<button type="button" role="tab" data-panel="insights-panel" aria-controls="insights-panel" aria-selected="false" class="workspace-nav-item" data-admin-only hidden><span class="nav-symbol" aria-hidden="true">◉</span><span>Insights & customers</span><span class="nav-trailing" aria-hidden="true">›</span></button>
+<button type="button" role="tab" data-panel="reports-panel" aria-controls="reports-panel" aria-selected="false" class="workspace-nav-item" data-admin-only hidden><span class="nav-symbol" aria-hidden="true">◇</span><span>Reports & feedback</span><span class="nav-trailing" aria-hidden="true">›</span></button>
+<button type="button" role="tab" data-panel="team-panel" aria-controls="team-panel" aria-selected="false" class="workspace-nav-item" data-admin-only hidden><span class="nav-symbol" aria-hidden="true">♙</span><span>Team permissions</span><span class="nav-trailing" aria-hidden="true">›</span></button>
+        </div>
+      </nav>
+      <div class="sidebar-foot">Fresh meals, thoughtful service.<br>Made with care at Em’s Taste.</div>
+    </div>
+    <div class="workspace-content">
+      <div class="workspace-toolbar">
+        <div>
+          <p class="workspace-toolbar-kicker">EM’S TASTE · DAILY MANAGEMENT</p>
+          <h1 id="workspace-page-title">Overview</h1>
+          <p id="workspace-page-desc">Your kitchen, at a glance.</p>
+        </div>
+        <div class="workspace-toolbar-actions">
+          <button type="button" id="workspace-mobile-nav" class="button button-outline" aria-expanded="false" aria-controls="workspace-navigation"><span aria-hidden="true">☰</span> Sections</button>
+          <button type="button" id="refresh-dashboard" class="button button-outline">↻ Refresh</button>
+        </div>
       </div>
-      <div class="admin-tabs" role="tablist" aria-label="Dashboard sections">
-        <button type="button" role="tab" aria-controls="menu-panel" aria-selected="true" class="active" data-panel="menu-panel">Menu & pricing</button>
-        <button type="button" role="tab" aria-controls="orders-panel" aria-selected="false" data-panel="orders-panel">Orders</button>
-        <button type="button" role="tab" aria-controls="bulk-panel" aria-selected="false" data-panel="bulk-panel">Bulk orders</button>
-        <button type="button" role="tab" aria-controls="prep-panel" aria-selected="false" data-panel="prep-panel">Kitchen prep</button>
-        <button type="button" role="tab" aria-controls="settings-panel" aria-selected="false" data-panel="settings-panel" hidden>Ordering settings</button>
-        <button type="button" role="tab" aria-controls="insights-panel" aria-selected="false" data-panel="insights-panel" hidden>Customers & insights</button>
-        <button type="button" role="tab" aria-controls="team-panel" aria-selected="false" data-panel="team-panel" hidden>Team permissions</button>
-        <button type="button" role="tab" aria-controls="reports-panel" aria-selected="false" data-panel="reports-panel" hidden>Reports & requests</button>
-      </div>
+      <section id="overview-panel" class="admin-panel overview-panel" role="tabpanel" aria-label="Overview">
+        <div class="overview-hero">
+          <div><p class="section-kicker">TODAY AT EM’S TASTE</p><h2>Let’s make today <em>a good one.</em></h2>
+            <p>Start with incoming orders, check meal availability, then prepare what the kitchen needs.</p></div>
+          <span id="overview-refresh-time" class="overview-sync">Waiting for data…</span>
+        </div>
+        <div class="stat-row">
+          <button type="button" class="stat-card stat-action" data-go="orders-panel"><span>Pending orders</span><strong id="stat-pending">—</strong><small>Requests awaiting review <span aria-hidden="true">↗</span></small></button>
+          <button type="button" class="stat-card stat-action" data-go="bulk-panel"><span>Large requests</span><strong id="stat-bulk">—</strong><small>Awaiting quotation <span aria-hidden="true">↗</span></small></button>
+          <button type="button" class="stat-card stat-action" data-go="menu-panel"><span>Menu items</span><strong id="stat-items">—</strong><small>Saved dishes <span aria-hidden="true">↗</span></small></button>
+          <div class="stat-card"><span>Recent request value</span><strong id="stat-total">—</strong><small>Not confirmed sales</small></div>
+          <button type="button" class="stat-card stat-action" data-go="insights-panel" data-admin-only hidden><span>Customers</span><strong id="stat-customers">—</strong><small>Registered profiles <span aria-hidden="true">↗</span></small></button>
+        </div>
+        <div class="overview-columns">
+          <div class="overview-card">
+            <p class="section-kicker">YOUR NEXT STEPS</p>
+            <h3>Daily kitchen checklist</h3>
+            <div class="overview-task"><span class="task-index">01</span><div><strong>Review new orders</strong><small>Confirm quantities and workday details.</small></div><button type="button" data-go="orders-panel">Open ↗</button></div>
+            <div class="overview-task"><span class="task-index">02</span><div><strong>Check the menu</strong><small>Update availability, prices, and meal information.</small></div><button type="button" data-go="menu-panel">Open ↗</button></div>
+            <div class="overview-task"><span class="task-index">03</span><div><strong>Prepare the kitchen</strong><small>See confirmed quantities grouped by workplace.</small></div><button type="button" data-go="prep-panel">Open ↗</button></div>
+            <div class="overview-task"><span class="task-index">04</span><div><strong>Review large requests</strong><small>Handle inquiries for 51 or more meals.</small></div><button type="button" data-go="bulk-panel">Open ↗</button></div>
+          </div>
+          <div class="overview-card overview-operations-card">
+            <p class="section-kicker">ORDERING WINDOW</p>
+            <h3>Storefront status</h3>
+            <p id="overview-ordering-state" class="overview-availability">Checking ordering settings…</p>
+            <p id="overview-workday" class="muted">Workday not set</p>
+            <p class="overview-tip">Remember: the website accepts normal pre-orders only before 11 PM Philippine time on eligible ordering days.</p>
+            <button type="button" class="button button-outline" data-go="settings-panel" data-admin-only hidden>Manage ordering settings ↗</button>
+            <a class="overview-storefront-link" href="./" target="_blank" rel="noopener noreferrer">View customer website ↗</a>
+          </div>
+        </div>
+      </section>
       <section id="menu-panel" class="admin-panel" role="tabpanel">
         <div class="panel-title"><div><h2>Today’s recipes, tomorrow’s meals.</h2><p>Create a menu item, set its price, and choose whether it's available.</p></div></div>
         <div class="admin-split">
@@ -157,8 +217,9 @@
         </form>
       </section>
     </div>
-  </main>
-  <footer class="admin-footer">© <span id="year"></span> Em's Taste · Private administration</footer>
-  <script type="module" src="admin.js"></script>
+  </div>
+</main>
+<footer class="admin-footer">© <span id="year"></span> Em’s Taste · Private staff and admin workspace</footer>
+<script type="module" src="admin.js"></script>
 </body>
 </html>
