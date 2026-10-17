@@ -99,6 +99,18 @@ To authorize other team members:
 
 **A payment flag is a manual staff record, NOT proof of online payment.** A bulk request's quote is NOT a finalized invoice.
 
+## Mobile navigation and administrator sign-in
+
+- **Mobile customer experience:** the website now has a hamburger menu in the top-right corner. It shows Menu, How ordering works, My account & orders, Requests & feedback, Our Story, and Staff / Admin portal.
+- The public page shows the menu and ordering instructions *before* the signed-in account history and customer feedback sections. Order history and request forms expand only when selected.
+- A global `[hidden]` style keeps controls that should be hidden—such as “Continue with Google” after signing in—from appearing incorrectly.
+
+**Admin portal:** `https://dropnike21.github.io/em-s-taste-/admin.html`
+
+If Google sign-in works on the customer page but staff/admin access is denied, use the admin portal's **Access troubleshooting** section. It shows your active Google email and Firebase Authentication UID. Confirm the correct UID has a trusted owner record at `admins/{uid}` with Boolean `active: true`, or an approved `team/{uid}` role. The original owner authorization is checked first, independently of the optional team record. When Firebase says *permission-denied*, verify that the latest `firestore.rules` were published in Firebase Console.
+
+> Signing into Google and receiving a customer profile does **not** automatically create staff/admin access. The admin portal and its associated Firestore permissions require explicit role approval. The public menu may remain in **preview mode** until real dishes and ordering settings are configured by authorized staff.
+
 ## How to publish changes
 
 1. Go to https://console.firebase.google.com/project/ems-taste/authentication/providers and enable **Google** sign-in. Verify your hosted domain (e.g., \`dropnike21.github.io\`) under Authentication → Settings → Authorized domains.
