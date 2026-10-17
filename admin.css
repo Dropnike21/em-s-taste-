@@ -313,3 +313,67 @@
  .user-role-picker{flex:1}
  .user-role-picker select{width:100%}
 }
+
+
+/* Administration UX refinement — display data first, guidance on demand. */
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.workspace-toast{position:fixed;left:50%;bottom:25px;z-index:110;transform:translateX(-50%);width:max-content;max-width:min(calc(100vw - 30px),440px);padding:12px 18px;border-radius:10px;background:#33543a;color:#fff;box-shadow:0 9px 28px #1a352938;font:600 12px/1.45 var(--body);text-align:center}
+.workspace-toast[hidden]{display:none!important}
+.admin-page .admin-message{background:#fff3e8;color:#8b362b;border-color:#dba58b}
+.admin-page .admin-main{padding-top:16px}
+.admin-page .workspace-toolbar{margin:3px 0 19px;gap:13px}
+.admin-page .workspace-toolbar h1{margin-bottom:3px}
+.admin-page .workspace-toolbar p:not(.workspace-toolbar-kicker){font-size:12px;line-height:1.5}
+.admin-page #team-panel > .users-admin-card{margin-top:0}
+.admin-page .users-admin-card{padding:19px}
+.admin-page .users-summary{gap:9px;margin-bottom:14px}
+.admin-page .users-summary > div{padding:12px 14px}
+.admin-page .users-summary-label{font-size:10px}
+.admin-page .users-summary strong{font-size:26px;margin-top:2px}
+.admin-page .users-filterbar{gap:9px;margin-bottom:13px!important;background:transparent;border:0;padding:0;align-items:stretch}
+.admin-page .users-filterbar .workspace-search{min-width:0;flex:1.5}
+.admin-page .users-filterbar .workspace-select{min-width:135px;flex:.6}
+.admin-page .users-filterbar label{margin:0!important;min-width:0}
+.admin-page .users-filterbar input,.admin-page .users-filterbar select{min-height:40px;width:100%}
+.admin-page .team-refresh-status{font-size:11px;margin:6px 0 11px;padding:10px;background:#fff0e4;border-color:#e4c6b6;color:#894730}
+.admin-page .team-refresh-status[hidden]{display:none!important}
+.admin-page .user-row{padding:13px 14px}
+.admin-page .users-pagination{margin-top:12px}
+.admin-page .users-pagination .muted{font-size:11px}
+.admin-page .user-row-controls .button:disabled{opacity:.42;cursor:default}
+.admin-page .users-info{margin-top:13px;border-top:1px solid var(--line);font-size:11px;color:#8c7868;padding-top:10px}
+.admin-page .users-info summary{cursor:pointer;list-style:revert;padding:5px 0}
+.admin-page .users-info p{font-size:11px;line-height:1.65;margin:7px 0}
+.admin-page .users-advanced{padding:14px 18px}
+.admin-page .users-advanced summary{list-style:revert}
+.admin-page .admin-panel:focus-visible{outline:2px solid var(--terracotta)}
+@media(max-width:860px){
+ .admin-page .admin-main{padding-top:14px}
+ .admin-page .workspace-toolbar{margin:0 0 15px}
+ .admin-page .workspace-toolbar-actions{gap:7px}
+}
+@media(max-width:570px){
+ .admin-page .workspace-toolbar{flex-wrap:wrap;align-items:center;gap:9px;margin-bottom:13px}
+ .admin-page .workspace-toolbar > div:first-child{flex:1 1 auto;min-width:0}
+ .admin-page .workspace-toolbar h1{font-size:29px;line-height:1.2}
+ .admin-page .workspace-toolbar #workspace-page-desc{display:none}
+ .admin-page .workspace-toolbar-actions{flex-direction:row;align-items:center;gap:7px;margin:0}
+ .admin-page .workspace-toolbar-actions .button{min-height:37px;white-space:nowrap;padding:7px 10px}
+ .admin-page .users-admin-card{padding:12px}
+ .admin-page .users-summary{gap:6px;margin-bottom:12px}
+ .admin-page .users-summary > div{padding:9px 8px;border-radius:8px}
+ .admin-page .users-summary-label{font-size:9px}
+ .admin-page .users-summary strong{font-size:21px}
+ .admin-page .users-filterbar{display:grid;grid-template-columns:minmax(0,1fr) 114px;gap:8px;padding:0}
+ .admin-page .users-filterbar .workspace-select{min-width:0}
+ .admin-page .users-filterbar .workspace-search{min-width:0}
+ .admin-page .users-filterbar input{padding:8px 10px;font-size:12px}
+ .admin-page .users-filterbar select{padding:7px 5px;font-size:12px}
+ .admin-page .user-row{padding:12px;gap:9px}
+ .admin-page .user-row-controls{gap:8px}
+ .admin-page .user-role-picker{flex:1;min-width:118px}
+ .admin-page .user-role-picker select{min-width:0}
+ .admin-page .user-row-controls .button{min-width:70px}
+ .admin-page .users-pagination{margin-top:10px}
+ .workspace-toast{bottom:16px}
+}
