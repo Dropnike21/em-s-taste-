@@ -30,31 +30,24 @@ All staff operations **plus**:
 - Private ratings and operational insights.
 - Administrator-only reports, bug triage, service issues, and resolution statuses.
 
-## Product catalog and Monday–Friday weekly menu
+## Simple staff workflow: My dishes → Choose meals → Publish
 
-**Two separate concepts:** (1) stable product records under `menu/{productId}` hold the actual name, description, price, and photo; (2) daily selections under `menuDays/YYYY-MM-DD` determine which products are offered on a particular workday. Changing a weekly assignment does not duplicate or rewrite any product or past order.
+The site has a permanent `menu/{productId}` record for each dish and separate `menuDays/YYYY-MM-DD` documents for the Monday–Friday schedule. Staff can reuse existing dishes without re-entering prices every week.
 
-### Set up the 30 starter dishes once
+1. **My dishes:** Press **Set up 30 Filipino dishes** once. The starter dishes are unpriced, inactive drafts; re-running setup never overwrites an existing dish. On each dish card tap **Set price**, enter the real peso amount, then **Save price**. This also marks the dish ready for a weekly menu. Use **Pause** if the kitchen cannot make it.
+2. **Picture:** Tap **Picture** on a dish. Press **Choose a free photo** to see candidate Wikimedia Commons photos with supported CC0/CC BY/CC BY-SA licenses. Tap a suitable picture and **Save changes**. Store photo source, author credit, license and source links in the product document. The public menu labels it as an example photo and displays attribution. Always check that the selected photo and its license are appropriate; no unrelated copyrighted internet photos are copied automatically.
+3. **More:** Only if necessary, open **More → Edit details** for names, descriptions and custom picture links. Archived dishes are kept for past orders. Extra dishes can be created without redoing the starter setup.
+4. **Choose meals:** Select the Monday starting a week. Tap the big **＋ Add / ✓ Added** meal buttons under each weekday; there is no need to type any product data again. You can copy Monday to other days.
+5. Tap **Save for later** to keep a private draft or **Publish this week's menu** to display your selected dishes to customers. Only a configured, active, nonarchived dish with a valid price may be selected. The administrator must still open ordering separately.
 
-1. Staff/Admin → **Product catalog** → **Add 30 Filipino starter products**.
-2. The application checks the existing menu by preset and name and creates only missing preset IDs in one Firestore transaction. It **never overwrites** an existing product at that ID.
-3. New starter products are **unpriced drafts** (`price: 0`, `configured: false`, `available: false`). No invented pricing or meal availability is published.
-4. For each dish you actually intend to sell, choose **Edit**, enter your actual price, adjust its name, description, or photo, tick **Product active**, and save. This updates the same product record; it need not be reconfigured each week.
-5. Custom products can be added separately. Archive or pause existing products without deleting prior orders. Archived products remain for transaction history.
+### Photos and rights
 
-The 30 dishes are a curated, unranked list of commonly eaten Filipino dishes—not an official top-30 sales statistic. Source references: https://www.tasteatlas.com/philippines ; https://www.pna.gov.ph/articles/1273614
+Only Wikimedia Commons photos returned with accepted reusable license metadata are offered by the in-site finder. The author, Commons source, and license are saved together with the image and displayed as links below the customer menu card. Since photos can differ from the kitchen's actual recipes, they are labeled **Example photo** until replaced with genuine kitchen photography. If image lookup is offline or no usable results exist, staff can skip the picture and add it later. Wikimedia's metadata is imperfect: operators should verify the photo and its license before publication.
 
-### Plan a weekly menu
+### Required Firebase deployment
 
-1. Staff/Admin → **Weekly menu**.
-2. Choose the Monday starting the week, then select eligible catalog products for each Monday–Friday tab. Use **Copy Monday to Tue–Fri** to repeat a menu, then adjust individual days.
-3. Leave **Publish** unchecked to save a draft. Check it and save when the schedule is finalized. The system writes five documents to `menuDays` as one atomic batch.
-4. Published menu days are previewed publicly. Customers only see configured, active, nonarchived products assigned to the selected day.
-5. Administrators still enable normal ordering separately under **Ordering controls** for the following eligible workday. Weekly publication alone **does not open checkout**. Bulk requests follow a separate workflow.
+**Weekly menu feature requires updating the Firestore rules** using the complete repository `firestore.rules` file in Firebase Console. Publishing GitHub changes does not publish Firestore rules. Existing product/menu entries are preserved and only the new `menuDays` collection requires additional read/write permissions. Changes to the staff-facing buttons and image picker do not require *additional* rules beyond those introduced with the weekly planner.
 
-**Security rule deployment required:** Publish the new `firestore.rules` from the repository in Firebase Console before testing the weekly planner. Those rules authorize `menuDays` writes for staff, enforce publication and selected product IDs at customer checkout, and preserve legacy `menu.available` behavior when no daily plan exists. The GitHub commit alone does *not* deploy the Firestore rules.
-
-**Testing:** Verify an unpriced draft is never publicly orderable, an unpublished weekly plan cannot be ordered, a published day displays only assigned products, an already-saved product survives rerunning the bootstrap, and staff edits to the product do not erase previous order details. Check separate customer/staff/admin accounts.
 
 ## Users & roles — manage customers without UID lookups
 
