@@ -36,7 +36,16 @@
       <button id="google-login" type="button" class="button google-login-button button-full">
         <span class="google-mark" aria-hidden="true">G</span> Continue with Google
       </button>
-      <p class="form-hint">No separate Em’s Taste username or password is needed. If this is your first sign-in, an authorized owner must approve your Firebase user ID before you can manage the business.</p>
+      <p class="form-hint">Use the same Google account that was approved for Em’s Taste. Your Firebase UID must have an active administrator or staff record.</p>
+      <details id="admin-access-help" class="admin-access-help" hidden>
+        <summary>Access troubleshooting</summary>
+        <p id="admin-help-reason">Your administrator account has not been verified.</p>
+        <div class="admin-identity"><span>Signed-in Google account</span><strong id="admin-help-email">—</strong></div>
+        <div class="admin-identity"><span>Firebase Authentication UID</span><code id="admin-help-uid">—</code></div>
+        <p>The business owner must create <code>admins/{your UID}</code> with <code>active</code> set to Boolean <code>true</code>, or authorize your UID under <code>team/{your UID}</code> as staff/admin. This must be done in Firebase Console by an authorized owner.</p>
+        <p><a href="https://console.firebase.google.com/project/ems-taste/firestore/data" target="_blank" rel="noopener noreferrer">Check administrator record in Firestore ↗</a>
+        · <a href="https://console.firebase.google.com/project/ems-taste/firestore/rules" target="_blank" rel="noopener noreferrer">Check published security rules ↗</a></p>
+      </details>
     </section>
 
     <div id="dashboard-view" hidden>
