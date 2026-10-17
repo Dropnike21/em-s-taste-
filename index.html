@@ -141,12 +141,11 @@
         <p class="section-kicker">WE LISTEN TO OUR CUSTOMERS</p>
         <h2>We’d love to <em>hear from you.</em></h2>
         <p class="section-desc">Have a meal suggestion, feedback, or a large workplace booking? Choose one of the options below.</p>
-        <p id="services-auth" class="service-auth">Sign in with Google in the account section above to submit a request or report.</p>
+        <p id="services-auth" class="service-auth"><a href="#account-section">Sign in to your account</a> to send a request or report.</p>
         <div id="customer-service-forms" class="customer-service-grid" hidden>
           <details class="request-disclosure"><summary><strong>Suggest a dish or send feedback</strong><small>Menu requests, ratings, bugs & issues</small></summary>
           <form id="feedback-form" class="admin-card request-form">
-            <h3>Suggestions and feedback</h3>
-            <p class="muted">For meal ideas, website/service ratings, bugs, issues, or other concerns. Reports are not publicly posted.</p>
+            <p class="muted">Share a meal idea, service rating, or problem report privately.</p>
             <label for="feedback-type">Request category</label>
             <select id="feedback-type" required>
               <option value="menu_request">Request a meal for the menu</option>
@@ -175,8 +174,7 @@
           </details>
           <details class="request-disclosure"><summary><strong>Book 51+ meals</strong><small>Request a bulk quotation from our team</small></summary>
           <form id="bulk-form" class="admin-card request-form">
-            <h3>Large meal booking — 51+ servings</h3>
-            <p class="muted">For large workplace requests. Submit the number of meals and your preferred date; our staff will review availability and send a quotation. No booking is confirmed automatically.</p>
+            <p class="muted">Request 51–500 meals for a workday within the next 90 days. Staff will confirm the quotation and availability.</p>
             <label for="bulk-date">Requested workday *</label>
             <input type="date" id="bulk-date" required>
             <label for="bulk-qty">Number of meals *</label>
@@ -192,10 +190,10 @@
           </form>
           </details>
         </div>
-        <div id="customer-request-history" class="customer-requests-history" hidden>
-          <h3>Your booking requests and reports</h3>
+        <details id="customer-request-history" class="customer-requests-history" hidden>
+          <summary>Your previous requests and reports</summary>
           <div id="customer-service-history"><p class="muted">Loading your requests…</p></div>
-        </div>
+        </details>
       </div>
     </section>
 
