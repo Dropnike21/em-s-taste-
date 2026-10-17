@@ -15,7 +15,7 @@
 
 Use the **ems-taste** Firebase project: https://console.firebase.google.com/project/ems-taste/overview
 
-1. Open **Authentication → Sign-in method → Google** and enable it. Firebase may ask you to select a public-facing support email. Save the provider. You **do not need to create a Meta app**, get a Meta app secret, or configure Google Sign-In.
+1. Open **Authentication → Sign-in method → Google** and enable it. Firebase may ask you to select a public-facing support email. Save the provider. You **do not need to create a Meta app or configure Facebook Login**.
 2. Under **Authentication → Settings → Authorized domains**, make sure the hostname serving your site is listed. For GitHub Pages this is **`dropnike21.github.io`** (domain only; no `https://` or repository path). Add a custom domain if using one.
 3. Ensure your **Cloud Firestore** database exists. Publish the repository's **`firestore.rules`** in Firebase **Firestore Database → Rules**, or use Firebase CLI: `firebase deploy --only firestore:rules --project ems-taste`. Updating GitHub **does not deploy** Firebase rules automatically.
 4. Publish GitHub Pages from **main → /(root)** if not already enabled, then open the deployed **`admin.html`** and select **Continue with Google**.
@@ -27,7 +27,7 @@ Use the **ems-taste** Firebase project: https://console.firebase.google.com/proj
 
 - Administrators use their existing **Google accounts**. The Em's Taste website does **not** require a new username or password, and does not store Google credentials.
 - Forgotten passwords and account recovery are handled through **Google**.
-- Using Google for the first time may produce a **different Firebase UID** than an old Email/Password or Google sign-in. Authorize the **Google** UID. Do not grant access merely because someone knows an admin email address.
+- Using Google for the first time may produce a **different Firebase UID** than an old Email/Password or Facebook sign-in. Authorize the **Google** UID. Do not grant access merely because someone knows an admin email address.
 - The website uses Firebase `GoogleAuthProvider` and `signInWithPopup()`. Browsers that block popups or mobile in-app browsers may require opening the admin site in a normal browser and allowing popups.
 - **The Firebase UID allowlist controls access**, not Google sign-in alone. The committed Firestore rules check the provider and the UID allowlist. Google accounts are not automatically administrators.
 
