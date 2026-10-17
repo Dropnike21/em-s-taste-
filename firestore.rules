@@ -47,7 +47,7 @@ service cloud.firestore {
         get(storefrontPath()).data.ordersOpen == true &&
         get(storefrontPath()).data.menuDate == nextWorkdayDate() &&
         get(storefrontPath()).data.menuDayKey is string &&
-        get(storefrontPath()).data.menuDayKey.matches('^\d{4}-\d{2}-\d{2}$');
+        get(storefrontPath()).data.menuDayKey.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
     }
 
     function validItem(item) {
