@@ -22,3 +22,11 @@
 .customer-directory-item small{font-size:11px;color:#807367;display:block;overflow-wrap:anywhere}
 .customer-directory-item .button{min-height:36px;padding:7px 15px}
 @media(max-width:790px){.stat-row{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-insight-grid{grid-template-columns:1fr}.admin-tabs button{padding-bottom:10px}}
+
+/* Kitchen packing sheet. */
+.prep-table-wrap{overflow-x:auto;border:1px solid var(--line);background:#fff;border-radius:10px}
+.prep-table{width:100%;border-collapse:collapse;font-size:13px}
+.prep-table th{text-align:left;background:#f6ebdc;color:#72412d;font-weight:700;padding:14px;white-space:nowrap}
+.prep-table td{padding:12px 14px;border-top:1px solid var(--line);color:#62574d}
+.prep-table tbody tr:hover{background:#fdf9f3}
+.subsection-title{margin-top:28px!important;padding-top:18px;border-top:1px solid var(--line)}
