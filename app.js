@@ -285,18 +285,54 @@
       if (plus) changeQuantity(plus.dataset.add, 1);
       if (minus) changeQuantity(minus.dataset.remove, -1);
     });
-    $("#order-form").addEventListener("submit", e => {
+    $("#order-form").addEventListener("submit", async e => {
       e.preventDefault();
-      updateSchedule(); // Recheck cutoff instead of trusting page-load time.
-      if (!schedule.open && !settings.previewMode) return;
+      updateSchedule();
+      const feedback = $("#cart-error");
+      feedback.textContent = "";
+      if (!acceptingOrders()) {
+        feedback.textContent = "Online ordering is not active for this workday.";
+        return;
+      }
       if (!totalItems()) return;
       const form = e.currentTarget;
       if (!form.checkValidity()) { form.reportValidity(); return; }
       const name = $("#customer-name").value.trim();
       const workplace = $("#workplace").value.trim();
-      if (!name || !workplace) { form.reportValidity(); return; }
-      orderText = buildSummary(name, workplace, $("#order-note").value.trim());
-      openReview();
+      const note = $("#order-note").value.trim();
+      if (!name || !workplace) {
+        feedback.textContent = "Please enter your name and workplace.";
+        return;
+      }
+      const items = lineItems().map(item => ({
+        id: item.id,
+        name: item.name,
+        quantity: cart[item.id],
+        unitPrice: Number(item.price)
+      }));
+      const summary = buildSummary(name, workplace, note);
+      const button = $("#prepare-order");
+      button.dataset.submitting = "yes";
+      updateCheckoutButton();
+      try {
+        const reference = await window.EMS_SUBMIT({
+          name, workplace, note, items, total: totalAmount(), serviceDate: schedule.serviceDate
+        });
+        orderText = "Order reference: " + reference + "\nStatus: PENDING (awaiting confirmation)\n\n" + summary;
+        $("#review-title").textContent = "Order request received";
+        $("#review-message").textContent = "Your request is recorded in our system. Em's Taste must confirm it before it is final.";
+        cart = {};
+        saveCart();
+        paintCart();
+        form.reset();
+        openReview();
+      } catch (error) {
+        console.error(error);
+        feedback.textContent = "Order not submitted. " + (error?.message || "Please try again.");
+      } finally {
+        button.dataset.submitting = "no";
+        updateCheckoutButton();
+      }
     });
     $("#copy-order").addEventListener("click", copyOrder);
     $("#share-order").addEventListener("click", async () => {
@@ -314,5 +350,16 @@
   paintMenu();
   paintCart();
   setupEvents();
+  window.addEventListener("ems-data", () => {
+    const live = window.EMS_LIVE_STATE;
+    if (live?.usingLiveMenu) {
+      dishes = window.EMS_MENU;
+      cart = loadCart();
+      saveCart();
+      paintMenu();
+      paintCart();
+    }
+    updateSchedule();
+  });
   window.setInterval(updateSchedule, 30000);
 })();
