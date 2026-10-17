@@ -24,6 +24,7 @@ function showDashboard(access){
  $("#dashboard-view").hidden=false;
  $("#sign-out").hidden=false;
  $("#workspace-role").textContent=role==="admin"?"Administrator workspace":"Staff workspace";
+ document.querySelectorAll('[data-roles="admin"]').forEach(el=>{el.hidden=role!=="admin";});
  document.querySelectorAll("[data-panel]").forEach(tab=>{
   const authorized=staffPanels.includes(tab.dataset.panel)||(role==="admin"&&adminPanels.includes(tab.dataset.panel));
   tab.hidden=!authorized;
@@ -64,9 +65,12 @@ async function loadAll(){
  if(!role)return;
  msg("Loading kitchen workspace…");
  const essentials=[refreshMenu(),refreshOrders(),refreshBulk()];
- if(role==="admin")essentials.push(refreshSettings(),refreshInsights(),refreshPeople(),refreshReports());
+ if(role==="admin")essentials.push(refreshSettings(),refreshPeople(),refreshReports());
  else essentials.push(refreshSuggestions());
  const outcomes=await Promise.allSettled(essentials);
+ if(role==="admin"&&outcomes.every(x=>x.status==="fulfilled")){
+  try{await refreshInsights();}catch(error){console.error(error);msg("Operational data loaded, but ratings could not be refreshed.");}
+ }
  const fails=outcomes.filter(x=>x.status==="rejected");
  if(fails.length){fails.forEach(x=>console.error(x.reason));msg(fails.length+" workspace section(s) could not load. Check permissions and database setup.");}
  else msg("Workspace refreshed.",true);
